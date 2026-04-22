@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TABE Reader · Demo</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #1e1e2e;
+      --bg2:          #27273d;
+      --bg3:          #32324a;
+      --border:       #3a3a55;
+      --text:         #cdd6f4;
+      --text-muted:   #7f849c;
+      --accent:       #cba6f7;
+      --yellow:       #f9e2af;
+      --yellow-bg:    #3d2e00;
+      --green:        #a6e3a1;
+      --orange:       #fab387;
+      --blue:         #89b4fa;
+      --surface:      #1a1a2e;
+
+      /* light */
+      --lb-bg:         #eff1f5;
+      --lb-bg2:        #e6e9ef;
+      --lb-bg3:        #dce0e8;
+      --lb-border:     #ccd0da;
+      --lb-text:       #4c4f69;
+      --lb-muted:      #9ca0b0;
+      --lb-accent:     #7287fd;
+      --lb-yellow:     #df8e1d;
+      --lb-yellow-bg:  #ffe066;
+      --lb-green:      #40a02b;
+      --lb-orange:     #fe640b;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    body.light {
+      --bg: var(--lb-bg); --bg2: var(--lb-bg2); --bg3: var(--lb-bg3);
+      --border: var(--lb-border); --text: var(--lb-text);
+      --text-muted: var(--lb-muted); --accent: var(--lb-accent);
+      --yellow: var(--lb-yellow); --yellow-bg: var(--lb-yellow-bg);
+      --green: var(--lb-green); --orange: var(--lb-orange);
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #ffe066 30%, #a6e3a1 70%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 16px; color: #1e1e2e;
+    }
+    .logo-text h1 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .logo-text p  { font-size: 0.75rem; color: var(--text-muted); }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+    .btn:hover { background: var(--border); }
+    .btn.active, .btn.primary {
+      background: #ffe066;
+      border-color: #ffe066;
+      color: #1e1e2e;
+      font-weight: 700;
+    }
+    body.light .btn.active, body.light .btn.primary {
+      background: #df8e1d; border-color: #df8e1d; color: #fff;
+    }
+    .btn.secondary {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .toggle-pill {
+      display: flex;
+      background: var(--bg3);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .toggle-pill .btn {
+      border: none;
+      border-radius: 0;
+      padding: 6px 14px;
+    }
+    .toggle-pill .btn:first-child { border-radius: 9px 0 0 9px; }
+    .toggle-pill .btn:last-child  { border-radius: 0 9px 9px 0; }
+
+    /* ── Main 2-column layout ─────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 0;
+    }
+
+    @media (max-width: 780px) {
+      .main { grid-template-columns: 1fr; }
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+    }
+    .pane:last-child { border-right: none; }
+
+    .pane-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .pane-badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .pane-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* ── Editor textarea ─────────────────────────────────── */
+    #editor {
+      width: 100%;
+      min-height: 400px;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      resize: none;
+    }
+
+    /* ── Reading View output ─────────────────────────────── */
+    #reading-view {
+      max-width: 680px;
+    }
+    #reading-view p,
+    #reading-view li {
+      margin-bottom: 1em;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    #reading-view h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.6em; color: var(--text); }
+    #reading-view h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5em; color: var(--text); }
+    #reading-view h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4em; color: var(--text); }
+    #reading-view ul, #reading-view ol { padding-left: 1.4em; margin-bottom: 1em; }
+    #reading-view blockquote {
+      border-left: 3px solid var(--border);
+      padding-left: 1em;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 1em;
+    }
+    #reading-view code {
+      background: var(--bg3);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    #reading-view pre {
+      background: var(--bg3);
+      border-radius: 8px;
+      padding: 14px;
+      overflow-x: auto;
+      margin-bottom: 1em;
+    }
+    #reading-view pre code { background: none; padding: 0; }
+    #reading-view hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5em 0;
+    }
+    #reading-view strong { font-weight: 700; }
+    #reading-view em { font-style: italic; }
+    #reading-view mark {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+    body.light #reading-view mark {
+      background: #ffe066;
+      color: #5a3e00;
+    }
+    #reading-view u { text-decoration: underline; }
+
+    /* ── TABE Spans ──────────────────────────────────────── */
+    .tabe-bold {
+      font-weight: 700;
+    }
+    .tabe-highlight {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      font-weight: 600;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+    body.light .tabe-highlight {
+      background: #ffe066;
+      color: #5a3e00;
+    }
+    .tabe-italic {
+      color: var(--green);
+      font-style: italic;
+    }
+    body.light .tabe-italic {
+      color: #40a02b;
+    }
+    .tabe-number {
+      color: var(--orange);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    body.light .tabe-number {
+      color: #fe640b;
+    }
+
+    /* hover reveal on processed paragraphs */
+    p.tabe-processed, li.tabe-processed {
+      border-left: 2px solid transparent;
+      padding-left: 6px;
+      margin-left: -8px;
+      transition: border-color 0.2s;
+    }
+    p.tabe-processed:hover, li.tabe-processed:hover {
+      border-left-color: #ffe066;
+    }
+
+    /* ── Legend ──────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .legend-swatch {
+      width: 28px;
+      height: 18px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* ── Layer toggles ───────────────────────────────────── */
+    .layer-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      align-items: center;
+    }
+    .layer-toggles label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+    .layer-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .layer-btn.on { color: #1e1e2e; border-color: transparent; }
+    .layer-btn[data-layer="nouns"].on   { background: #cdd6f4; }
+    .layer-btn[data-layer="verbs"].on   { background: #ffe066; }
+    .layer-btn[data-layer="adjs"].on    { background: #a6e3a1; }
+    .layer-btn[data-layer="numbers"].on { background: #fab387; }
+    body.light .layer-btn.on { color: #fff; }
+    body.light .layer-btn[data-layer="nouns"].on   { background: #7287fd; }
+    body.light .layer-btn[data-layer="verbs"].on   { background: #df8e1d; }
+    body.light .layer-btn[data-layer="adjs"].on    { background: #40a02b; }
+    body.light .layer-btn[data-layer="numbers"].on { background: #fe640b; }
+
+    /* ── Status bar ──────────────────────────────────────── */
+    .status-bar {
+      padding: 6px 20px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #a6e3a1;
+    }
+    .status-dot.off { background: var(--text-muted); }
+
+    /* ── Sample presets ──────────────────────────────────── */
+    .preset-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .preset-bar label { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Scrollbars ──────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body class="dark">
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-text">
+        <h1>TABE Reader</h1>
+        <p>For brains that bounce off walls of text · Phase 0 Demo</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="toggle-pill">
+        <button class="btn active" id="btn-tabe" onclick="setMode('tabe')">TABE Mode</button>
+        <button class="btn" id="btn-plain" onclick="setMode('plain')">Plain</button>
+      </div>
+      <button class="btn secondary" id="btn-theme" onclick="toggleTheme()">☀ Light</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: Editor -->
+    <div class="pane">
+      <div class="pane-header">
+        <span>✏ Source Markdown</span>
+        <span class="pane-badge">Edit freely</span>
+      </div>
+      <div class="preset-bar">
+        <label>Samples:</label>
+        <button class="btn" onclick="loadPreset('networking')">Networking Note</button>
+        <button class="btn" onclick="loadPreset('research')">Research Paper</button>
+        <button class="btn" onclick="loadPreset('manual')">Manual TABE</button>
+        <button class="btn" onclick="loadPreset('code')">Code Notes</button>
+      </div>
+      <div class="pane-body">
+        <textarea id="editor" spellcheck="false" oninput="renderDebounced()"></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT: Reading View -->
+    <div class="pane">
+      <div class="pane-header">
+        <span>👁 Reading View</span>
+        <span class="pane-badge" id="mode-badge">TABE active</span>
+      </div>
+      <div class="layer-toggles">
+        <label>Layers:</label>
+        <button class="layer-btn on" data-layer="nouns"   onclick="toggleLayer(this)"><b>Bold</b> Nouns</button>
+        <button class="layer-btn on" data-layer="verbs"   onclick="toggleLayer(this)"><span style="background:#ffe066;color:#1e1e2e;padding:0 3px;border-radius:2px">Highlight</span> Verbs</button>
+        <button class="layer-btn on" data-layer="adjs"    onclick="toggleLayer(this)"><i style="color:#a6e3a1">Italic</i> Adj</button>
+        <button class="layer-btn on" data-layer="numbers" onclick="toggleLayer(this)"><span style="color:#fab387">123</span> Numbers</button>
+      </div>
+      <div class="pane-body">
+        <div id="reading-view"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-swatch tabe-bold" style="background:var(--bg3)">B</span> Nouns
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-highlight">H</span> Verbs
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-italic" style="background:var(--bg3)"><i>I</i></span> Adj/Adv
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-number" style="background:var(--bg3)">7</span> Numbers
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-pill">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">compromise.js NLP · local · no API</span>
+        </div>
+        <span id="stats-text"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- compromise.js: served locally, no CDN dependency -->
+<script src="./compromise.js"></script>
+
+<script>
+/* ============================================================
+   TABE Reader Demo — core logic
+   ============================================================ */
+
+// ── State ──────────────────────────────────────────────────
+const state = {
+  mode: 'tabe',
+  theme: 'dark',
+  layers: { nouns: true, verbs: true, adjs: true, numbers: true }
+};
+
+// ── Presets ────────────────────────────────────────────────
+const presets = {
+  networking: `# TABE Networking Note — Sample
+
+Met Sarah Chen at the AI startup mixer on Thursday. She is building a retrieval-augmented generation platform for enterprise clients. We discussed the challenges of chunking long documents into meaningful segments.
+
+Key takeaways from the evening: most founders are struggling with evaluation metrics. Nobody has a clean solution for measuring hallucination rates in production systems. Three companies mentioned using human reviewers as a fallback.
+
+Follow up with Sarah about her open-source evaluation framework. She mentioned releasing it in February with Apache 2.0 license. The GitHub repo already has 800 stars.
+
+Action items: schedule a coffee chat, read her technical blog post, join the Discord community she mentioned.`,
+
+  research: `# Reading Enhancement for Neurodivergent Users
+
+Bionic Reading was introduced in 2022 by Renato Casuut as a method to improve reading speed and comprehension. The technique bolds the first letters of each word to guide the reader's eye across the text.
+
+Studies suggest that readers with ADHD process text differently. Visual anchors reduce cognitive load by providing predictable focal points. The brain spends less energy on tracking and more on comprehension.
+
+Several competing approaches exist in the market. Traditional bionic reading uses a mechanical algorithm. Semantic approaches like TABE attempt to encode meaning — distinguishing keywords from context, actions from descriptions.
+
+The critical insight is that code editors have solved this problem for programming languages. Syntax highlighting applies semantic coloring based on grammatical role: keywords, strings, comments, identifiers. Natural language lacks formal grammar but NLP libraries can approximate it.`,
+
+  manual: `# Manual TABE Note — Already Formatted
+
+**Ahui** ==发现 Reading View 自动格式化效果不错== · *和手写 TABE 差不多* · **结论** ==这个插件能用==
+
+**核心功能** ==不改源文件== · Reading View 里自动渲染 · *compromise.js 本地运行* · **无需 API key**
+
+This paragraph has no manual formatting so the plugin will auto-apply TABE NLP formatting to it. Words like verbs will be highlighted, nouns will be bolded, and adjectives rendered in green.
+
+**注意** ==已有格式的段落== · *插件自动跳过* · 不会双重格式化`,
+
+  code: `# TypeScript Notes — NLP Processing
+
+The compromise library provides a simple API for natural language processing in JavaScript. It runs entirely in the browser without any server calls.
+
+The registerMarkdownPostProcessor hook fires after Obsidian renders each note section. The element parameter gives direct access to the rendered HTML nodes.
+
+For each paragraph element, the plugin checks for existing markdown emphasis. Paragraphs containing bold or highlight markers get skipped. Clean paragraphs receive the TABE treatment.
+
+The build process uses esbuild to bundle TypeScript and compromise into a single file. This keeps installation simple — just three files in the plugins directory.`
+};
+
+// ── Escape HTML ────────────────────────────────────────────
+function escapeHtml(t) {
+  return String(t)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ── NLP: applyTABE ─────────────────────────────────────────
+// Called ONLY on plain-text strings (no HTML inside).
+// compromise v14 .json({tags:true}) returns:
+//   [{ terms: [{ text, pre, post, tags: ["Noun","Singular",...] }] }]
+// tags is an ARRAY of strings, not an object — use .includes()
+function applyTABE(plainText) {
+  if (!plainText.trim()) return escapeHtml(plainText);
+  if (typeof nlp === 'undefined') return escapeHtml(plainText);
+
+  let termList = [];
+  try {
+    const doc = nlp(plainText);
+    const sentences = doc.json({ tags: true });
+    sentences.forEach(sent => {
+      (sent.terms || []).forEach(t => termList.push(t));
+    });
+  } catch(e) {
+    return escapeHtml(plainText);
+  }
+
+  if (!termList.length) return escapeHtml(plainText);
+
+  let html = '';
+  for (const term of termList) {
+    // tags is an Array<string> e.g. ["Verb","PastTense"]
+    const tags = Array.isArray(term.tags) ? term.tags : [];
+    const txt  = term.text || '';
+    const pre  = term.pre  || '';
+    const post = term.post || '';
+
+    const has = (...names) => names.some(n => tags.includes(n));
+
+    let cls = null;
+    if (state.layers.numbers && has('Value','Date','NumericValue','Cardinal','Ordinal')) {
+      cls = 'tabe-number';
+    } else if (state.layers.nouns && has('ProperNoun','Noun')) {
+      cls = 'tabe-bold';
+    } else if (state.layers.verbs && has('Verb')) {
+      cls = 'tabe-highlight';
+    } else if (state.layers.adjs && has('Adjective','Adverb')) {
+      cls = 'tabe-italic';
+    }
+
+    const ep = escapeHtml(pre);
+    const et = escapeHtml(txt);
+    const eo = escapeHtml(post);
+
+    if (cls && et.trim()) {
+      html += `${ep}<span class="${cls}">${et}</span>${eo}`;
+    } else {
+      html += ep + et + eo;
+    }
+  }
+
+  return html || escapeHtml(plainText);
+}
+
+// ── Markdown → HTML ─────────────────────────────────────────
+// Two-pass: first parse block structure, then inline markup.
+// TABE NLP runs on the RAW text before inline markup so it
+// doesn't accidentally see HTML tags as words.
+function renderMarkdown(md) {
+  const lines = md.split('\n');
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Heading
+    const hm = line.match(/^(#{1,6})\s+(.+)/);
+    if (hm) {
+      blocks.push({ type: 'heading', level: hm[1].length, raw: hm[2] });
+      i++; continue;
+    }
+
+    // HR
+    if (/^-{3,}$/.test(line.trim())) {
+      blocks.push({ type: 'hr' });
+      i++; continue;
+    }
+
+    // Fenced code block
+    if (line.startsWith('```')) {
+      let code = '';
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        code += escapeHtml(lines[i]) + '\n';
+        i++;
+      }
+      blocks.push({ type: 'code', code: code.trimEnd() });
+      i++; continue;
+    }
+
+    // Blockquote
+    if (line.startsWith('> ')) {
+      blocks.push({ type: 'blockquote', raw: line.slice(2) });
+      i++; continue;
+    }
+
+    // Unordered list
+    if (/^[*\-+]\s/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[*\-+]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^[*\-+]\s/, ''));
+        i++;
+      }
+      blocks.push({ type: 'ul', items });
+      continue;
+    }
+
+    // Ordered list
+    if (/^\d+\.\s/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s/, ''));
+        i++;
+      }
+      blocks.push({ type: 'ol', items });
+      continue;
+    }
+
+    // Empty line → skip
+    if (!line.trim()) { i++; continue; }
+
+    // Paragraph: accumulate lines
+    let raw = '';
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !lines[i].match(/^#{1,6}\s/) &&
+      !lines[i].startsWith('```') &&
+      !/^-{3,}$/.test(lines[i].trim())
+    ) {
+      raw += (raw ? ' ' : '') + lines[i];
+      i++;
+    }
+    if (raw) blocks.push({ type: 'paragraph', raw });
+    continue;
+  }
+
+  // Render blocks to HTML strings
+  return blocks.map(b => blockToHtml(b)).join('\n');
+}
+
+// Render a parsed block to HTML.
+// For paragraphs: if TABE mode is on and no manual formatting detected,
+//   we apply NLP on the RAW text, then wrap the result in <p>.
+// For everything else, we run inlineMarkdown on the raw text.
+function blockToHtml(b) {
+  switch (b.type) {
+    case 'hr':
+      return '<hr>';
+    case 'code':
+      return `<pre><code>${b.code}</code></pre>`;
+    case 'heading':
+      return `<h${b.level}>${inlineMarkdown(b.raw)}</h${b.level}>`;
+    case 'blockquote':
+      return `<blockquote>${inlineMarkdown(b.raw)}</blockquote>`;
+    case 'ul': {
+      const items = b.items.map(raw => `<li>${renderParagraphContent(raw)}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    }
+    case 'ol': {
+      const items = b.items.map(raw => `<li>${renderParagraphContent(raw)}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    }
+    case 'paragraph':
+      return `<p class="tabe-processed">${renderParagraphContent(b.raw)}</p>`;
+    default:
+      return '';
+  }
+}
+
+// Decide how to render a paragraph's inline content:
+// - If it has manual TABE markers (**bold**, ==hl==, *italic*) → just do inlineMarkdown
+// - If TABE mode ON → applyTABE(rawText), then wrap connector dots
+// - Otherwise → inlineMarkdown
+function renderParagraphContent(raw) {
+  const hasManual = /\*\*|==|\*[^*]|<u>/.test(raw);
+
+  if (hasManual || state.mode !== 'tabe') {
+    return inlineMarkdown(raw);
+  }
+
+  // Apply NLP on plain raw text (no HTML inside yet)
+  let html = applyTABE(raw);
+
+  // Style the · connector dot after NLP (it won't be a "word")
+  html = html.replace(/·/g, '<span style="opacity:0.45;margin:0 1px">·</span>');
+
+  return html;
+}
+
+// ── Inline markdown (for headings, blockquotes, manual-TABE paragraphs) ──
+function inlineMarkdown(text) {
+  let t = escapeHtml(text);
+  t = t.replace(/==(.+?)==/g, '<mark>$1</mark>');
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  t = t.replace(/·/g, '<span style="opacity:0.45;margin:0 1px">·</span>');
+  return t;
+}
+
+// ── Render pipeline ─────────────────────────────────────────
+let stats = { total: 0, processed: 0, skipped: 0 };
+
+function render() {
+  const md   = document.getElementById('editor').value;
+  const view = document.getElementById('reading-view');
+
+  view.innerHTML = renderMarkdown(md);
+
+  // Count stats from rendered DOM
+  stats = { total: 0, processed: 0, skipped: 0 };
+  view.querySelectorAll('p, li').forEach(el => {
+    stats.total++;
+    if (el.classList.contains('tabe-processed') && state.mode === 'tabe') {
+      // check if we actually ran NLP (no manual markers in source)
+      if (el.querySelector('.tabe-bold, .tabe-highlight, .tabe-italic, .tabe-number')) {
+        stats.processed++;
+      } else {
+        stats.skipped++;
+      }
+    }
+  });
+  updateStats();
+}
+
+function updateStats() {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('stats-text');
+  if (state.mode === 'tabe') {
+    dot.classList.remove('off');
+    text.textContent = `${stats.processed} paragraphs NLP-formatted · ${stats.skipped} manual/plain`;
+  } else {
+    dot.classList.add('off');
+    text.textContent = 'TABE off — plain render';
+  }
+}
+
+// ── Debounce ────────────────────────────────────────────────
+let debTimer;
+function renderDebounced() {
+  clearTimeout(debTimer);
+  debTimer = setTimeout(render, 220);
+}
+
+// ── Controls ────────────────────────────────────────────────
+function setMode(mode) {
+  state.mode = mode;
+  document.getElementById('btn-tabe').classList.toggle('active', mode === 'tabe');
+  document.getElementById('btn-plain').classList.toggle('active', mode === 'plain');
+  document.getElementById('mode-badge').textContent = mode === 'tabe' ? 'TABE active' : 'Plain render';
+  render();
+}
+
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.body.className = state.theme;
+  document.getElementById('btn-theme').textContent = state.theme === 'dark' ? '☀ Light' : '🌙 Dark';
+}
+
+function toggleLayer(btn) {
+  const layer = btn.dataset.layer;
+  state.layers[layer] = !state.layers[layer];
+  btn.classList.toggle('on', state.layers[layer]);
+  render();
+}
+
+function loadPreset(name) {
+  document.getElementById('editor').value = presets[name];
+  render();
+}
+
+// ── Init ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadPreset('networking');
+});
+</script>
+</body>
+</html>

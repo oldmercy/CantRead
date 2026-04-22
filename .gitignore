@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build artifacts (keep main.js for Obsidian — it IS the plugin)
+# tabe-reader/main.js is intentionally committed (users install it directly)
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log

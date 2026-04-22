@@ -1,0 +1,101 @@
+/* ============================================================
+   TABE Reader — styles.css
+   TABE emphasis hierarchy:
+     .tabe-bold      → nouns / proper nouns   → font-weight 700
+     .tabe-highlight → main verbs             → yellow background
+     .tabe-italic    → adjectives / adverbs   → green italic
+     .tabe-number    → numbers / dates        → orange accent
+   ============================================================ */
+
+/* ── Core emphasis spans ─────────────────────────────────── */
+
+.tabe-bold {
+  font-weight: 700;
+  color: var(--text-normal);
+  letter-spacing: 0.01em;
+}
+
+.tabe-highlight {
+  background-color: #ffe066;
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
+  /* Dark mode: soften the yellow */
+  .theme-dark & {
+    background-color: #b8960a;
+    color: #fffbe6;
+  }
+}
+
+.tabe-italic {
+  color: #4caf50;
+  font-style: italic;
+  /* Dark mode: slightly brighter green */
+  .theme-dark & {
+    color: #6fcf73;
+  }
+}
+
+.tabe-number {
+  color: #e06c00;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  /* Dark mode */
+  .theme-dark & {
+    color: #ffab5e;
+  }
+}
+
+/* ── Dark mode overrides (Obsidian CSS variables) ───────── */
+.theme-dark .tabe-highlight {
+  background-color: #7a6300;
+  color: #fff8d6;
+}
+
+.theme-dark .tabe-italic {
+  color: #6fcf73;
+}
+
+.theme-dark .tabe-number {
+  color: #ffab5e;
+}
+
+/* ── Processed paragraph indicator ─────────────────────── */
+/* Subtle left border to show TABE is active on a paragraph */
+.markdown-preview-view p.tabe-processed,
+.markdown-preview-view li.tabe-processed {
+  border-left: 2px solid transparent;
+  padding-left: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.markdown-preview-view p.tabe-processed:hover,
+.markdown-preview-view li.tabe-processed:hover {
+  border-left-color: #ffe066;
+}
+
+/* ── Settings tab styles ───────────────────────────────── */
+
+.tabe-settings-desc {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-bottom: 1.2em;
+}
+
+.tabe-color-table {
+  border-collapse: collapse;
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  width: 100%;
+}
+
+.tabe-color-table td {
+  padding: 4px 10px;
+  border: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+
+.tabe-color-table tr:first-child td {
+  font-weight: 600;
+  background: var(--background-secondary);
+}
