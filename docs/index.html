@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CantRead</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ffe066'/><text y='.9em' font-size='80' x='10'>T</text></svg>" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #1e1e2e;
+      --bg2:          #27273d;
+      --bg3:          #32324a;
+      --border:       #3a3a55;
+      --text:         #cdd6f4;
+      --text-muted:   #7f849c;
+      --accent:       #cba6f7;
+      --yellow:       #f9e2af;
+      --yellow-bg:    #3d2e00;
+      --green:        #a6e3a1;
+      --orange:       #fab387;
+      --blue:         #89b4fa;
+      --surface:      #1a1a2e;
+
+      /* light */
+      --lb-bg:         #eff1f5;
+      --lb-bg2:        #e6e9ef;
+      --lb-bg3:        #dce0e8;
+      --lb-border:     #ccd0da;
+      --lb-text:       #4c4f69;
+      --lb-muted:      #9ca0b0;
+      --lb-accent:     #7287fd;
+      --lb-yellow:     #df8e1d;
+      --lb-yellow-bg:  #ffe066;
+      --lb-green:      #40a02b;
+      --lb-orange:     #fe640b;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    body.light {
+      --bg: var(--lb-bg); --bg2: var(--lb-bg2); --bg3: var(--lb-bg3);
+      --border: var(--lb-border); --text: var(--lb-text);
+      --text-muted: var(--lb-muted); --accent: var(--lb-accent);
+      --yellow: var(--lb-yellow); --yellow-bg: var(--lb-yellow-bg);
+      --green: var(--lb-green); --orange: var(--lb-orange);
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #ffe066 30%, #a6e3a1 70%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 16px; color: #1e1e2e;
+    }
+    .logo-text h1 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .logo-text p  { font-size: 0.75rem; color: var(--text-muted); }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+    .btn:hover { background: var(--border); }
+    .btn.active, .btn.primary {
+      background: #ffe066;
+      border-color: #ffe066;
+      color: #1e1e2e;
+      font-weight: 700;
+    }
+    body.light .btn.active, body.light .btn.primary {
+      background: #df8e1d; border-color: #df8e1d; color: #fff;
+    }
+    .btn.secondary {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .toggle-pill {
+      display: flex;
+      background: var(--bg3);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .toggle-pill .btn {
+      border: none;
+      border-radius: 0;
+      padding: 6px 14px;
+    }
+    .toggle-pill .btn:first-child { border-radius: 9px 0 0 9px; }
+    .toggle-pill .btn:last-child  { border-radius: 0 9px 9px 0; }
+
+    /* ── Main 2-column layout ─────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 0;
+    }
+
+    @media (max-width: 780px) {
+      .main { grid-template-columns: 1fr; }
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+    }
+    .pane:last-child { border-right: none; }
+
+    .pane-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .pane-badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .pane-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* ── Editor textarea ─────────────────────────────────── */
+    #editor {
+      width: 100%;
+      min-height: 400px;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      resize: none;
+    }
+
+    /* ── Reading View output ─────────────────────────────── */
+    #reading-view {
+      max-width: 680px;
+    }
+    #reading-view p,
+    #reading-view li {
+      margin-bottom: 1em;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    #reading-view h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.6em; color: var(--text); }
+    #reading-view h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5em; color: var(--text); }
+    #reading-view h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4em; color: var(--text); }
+    #reading-view ul, #reading-view ol { padding-left: 1.4em; margin-bottom: 1em; }
+    #reading-view blockquote {
+      border-left: 3px solid var(--border);
+      padding-left: 1em;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 1em;
+    }
+    #reading-view code {
+      background: var(--bg3);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    #reading-view pre {
+      background: var(--bg3);
+      border-radius: 8px;
+      padding: 14px;
+      overflow-x: auto;
+      margin-bottom: 1em;
+    }
+    #reading-view pre code { background: none; padding: 0; }
+    #reading-view hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5em 0;
+    }
+    #reading-view strong { font-weight: 700; }
+    #reading-view em { font-style: italic; }
+    #reading-view mark {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+    body.light #reading-view mark {
+      background: #ffe066;
+      color: #5a3e00;
+    }
+    #reading-view u { text-decoration: underline; }
+
+    /* ── TABE Spans ──────────────────────────────────────── */
+    .tabe-bold {
+      font-weight: 700;
+    }
+    .tabe-highlight {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      font-weight: 600;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+    body.light .tabe-highlight {
+      background: #ffe066;
+      color: #5a3e00;
+    }
+    .tabe-italic {
+      color: var(--green);
+      font-style: italic;
+    }
+    body.light .tabe-italic {
+      color: #40a02b;
+    }
+    .tabe-number {
+      color: var(--orange);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    body.light .tabe-number {
+      color: #fe640b;
+    }
+
+    /* hover reveal on processed paragraphs */
+    p.tabe-processed, li.tabe-processed {
+      border-left: 2px solid transparent;
+      padding-left: 6px;
+      margin-left: -8px;
+      transition: border-color 0.2s;
+    }
+    p.tabe-processed:hover, li.tabe-processed:hover {
+      border-left-color: #ffe066;
+    }
+
+    /* ── Legend ──────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .legend-swatch {
+      width: 28px;
+      height: 18px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* ── Layer toggles ───────────────────────────────────── */
+    .layer-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      align-items: center;
+    }
+    .layer-toggles label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+    .layer-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .layer-btn.on { color: #1e1e2e; border-color: transparent; }
+    .layer-btn[data-layer="nouns"].on   { background: #cdd6f4; }
+    .layer-btn[data-layer="verbs"].on   { background: #ffe066; }
+    .layer-btn[data-layer="adjs"].on    { background: #a6e3a1; }
+    .layer-btn[data-layer="numbers"].on { background: #fab387; }
+    body.light .layer-btn.on { color: #fff; }
+    body.light .layer-btn[data-layer="nouns"].on   { background: #7287fd; }
+    body.light .layer-btn[data-layer="verbs"].on   { background: #df8e1d; }
+    body.light .layer-btn[data-layer="adjs"].on    { background: #40a02b; }
+    body.light .layer-btn[data-layer="numbers"].on { background: #fe640b; }
+
+    /* ── Status bar ──────────────────────────────────────── */
+    .status-bar {
+      padding: 6px 20px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #a6e3a1;
+    }
+    .status-dot.off { background: var(--text-muted); }
+
+    /* ── Sample presets ──────────────────────────────────── */
+    .preset-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .preset-bar label { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── AI Panel ─────────────────────────────────────────── */
+    .ai-panel {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      gap: 8px;
+    }
+    .ai-panel-header:hover { background: var(--bg3); }
+    .ai-panel-header .ai-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .ai-badge.route-b { background: #2a3d2a; color: #a6e3a1; border: 1px solid #4a7a4a; }
+    .ai-badge.route-c { background: #3d2e00; color: #f9e2af; border: 1px solid #7a5a00; }
+    body.light .ai-badge.route-b { background: #d8f0d0; color: #2a6a2a; border-color: #90c080; }
+    body.light .ai-badge.route-c { background: #fff0c0; color: #7a5a00; border-color: #d4a000; }
+    .ai-panel-toggle { font-size: 0.85rem; margin-left: auto; }
+    .ai-panel-body {
+      padding: 16px 20px 20px;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ai-panel-body.open { display: flex; }
+    .ai-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .ai-field label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .ai-field select,
+    .ai-field input[type="text"],
+    .ai-field input[type="password"] {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .ai-field select:focus,
+    .ai-field input:focus { border-color: #ffe066; }
+    .ai-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .ai-row .ai-field { flex: 1; min-width: 140px; }
+    .ai-hint {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .ai-status {
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-radius: 7px;
+      display: none;
+    }
+    .ai-status.info  { background: var(--bg3); color: var(--text-muted); display: block; }
+    .ai-status.ok    { background: #1a3d1a; color: #a6e3a1; display: block; }
+    .ai-status.error { background: #3d1a1a; color: #f38ba8; display: block; }
+    .ai-status.busy  { background: #3d2e00; color: #f9e2af; display: block; }
+    body.light .ai-status.ok    { background: #d8f0d0; color: #2a6a2a; }
+    body.light .ai-status.error { background: #ffd5d5; color: #c00; }
+    body.light .ai-status.busy  { background: #fff0c0; color: #7a5a00; }
+
+    /* ── Scrollbars ──────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body class="dark">
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-text">
+        <h1>CantRead</h1>
+        <p>For brains that bounce off walls of text</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="toggle-pill">
+        <button class="btn active" id="btn-tabe" onclick="setMode('tabe')">TABE Mode</button>
+        <button class="btn" id="btn-plain" onclick="setMode('plain')">Plain</button>
+      </div>
+      <button class="btn secondary" id="btn-theme" onclick="toggleTheme()">☀ Light</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: Editor -->
+    <div class="pane">
+      <div class="pane-header">
+        <span>✏ Source Markdown</span>
+        <span class="pane-badge">Edit freely</span>
+      </div>
+      <div class="preset-bar">
+        <label>🇺🇸 EN:</label>
+        <button class="btn" onclick="loadPreset('en_networking')">Networking</button>
+        <button class="btn" onclick="loadPreset('en_research')">Research</button>
+        <label style="margin-left:8px">🇨🇳 ZH:</label>
+        <button class="btn" onclick="loadPreset('zh_notes')">产品笔记</button>
+        <button class="btn" onclick="loadPreset('zh_adhd')">ADHD阅读</button>
+        <label style="margin-left:8px">🌐 Mix:</label>
+        <button class="btn" onclick="loadPreset('mixed_tabe')">TABE日志</button>
+        <button class="btn" onclick="loadPreset('mixed_networking')">Event记录</button>
+        <button class="btn" onclick="loadPreset('manual')">手写TABE</button>
+      </div>
+      <div class="pane-body">
+        <textarea id="editor" spellcheck="false" oninput="renderDebounced()"></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT: Reading View -->
+    <div class="pane">
+      <div class="pane-header">
+        <span>👁 Reading View</span>
+        <span class="pane-badge" id="mode-badge">TABE active</span>
+      </div>
+      <div class="layer-toggles">
+        <label>Layers:</label>
+        <button class="layer-btn on" data-layer="nouns"   onclick="toggleLayer(this)"><b>Bold</b> Nouns</button>
+        <button class="layer-btn on" data-layer="verbs"   onclick="toggleLayer(this)"><span style="background:#ffe066;color:#1e1e2e;padding:0 3px;border-radius:2px">Highlight</span> Verbs</button>
+        <button class="layer-btn on" data-layer="adjs"    onclick="toggleLayer(this)"><i style="color:#a6e3a1">Italic</i> Adj</button>
+        <button class="layer-btn on" data-layer="numbers" onclick="toggleLayer(this)"><span style="color:#fab387">123</span> Numbers</button>
+      </div>
+      <div class="pane-body">
+        <div id="reading-view"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-swatch tabe-bold" style="background:var(--bg3)">B</span> Nouns
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-highlight">H</span> Verbs
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-italic" style="background:var(--bg3)"><i>I</i></span> Adj/Adv
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch tabe-number" style="background:var(--bg3)">7</span> Numbers
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-pill">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">compromise.js NLP · local · no API</span>
+        </div>
+        <span id="stats-text"></span>
+      </div>
+
+      <!-- ── Route C: AI API Panel ─────────────────────────── -->
+      <div class="ai-panel">
+        <div class="ai-panel-header" onclick="toggleAIPanel()">
+          <span>⚡ Route C — AI Formatter</span>
+          <span class="ai-badge route-b" id="ai-route-badge">Route B: Local NLP</span>
+          <span class="ai-panel-toggle" id="ai-panel-chevron">▾</span>
+        </div>
+        <div class="ai-panel-body" id="ai-panel-body">
+
+          <div class="ai-hint">
+            Upgrade to AI-powered TABE: send text to an LLM for semantic annotation.
+            Your API key stays in the browser — never sent to our servers.
+          </div>
+
+          <div class="ai-row">
+            <div class="ai-field">
+              <label>Provider</label>
+              <select id="ai-provider" onchange="onProviderChange()">
+                <option value="openai">OpenAI (GPT)</option>
+                <option value="claude">Claude (Anthropic)</option>
+                <option value="custom">Custom / Local LLM</option>
+              </select>
+            </div>
+            <div class="ai-field">
+              <label>Model</label>
+              <input type="text" id="ai-model" placeholder="gpt-4o-mini" />
+            </div>
+          </div>
+
+          <div class="ai-field">
+            <label>API Key</label>
+            <input type="password" id="ai-apikey"
+              placeholder="sk-… (OpenAI) · sk-ant-… (Claude) · or leave blank for local LLM" />
+          </div>
+
+          <div class="ai-field" id="ai-baseurl-field" style="display:none">
+            <label>Base URL <span style="font-weight:400;color:var(--text-muted)">(OpenAI-compatible endpoint)</span></label>
+            <input type="text" id="ai-baseurl"
+              placeholder="http://localhost:11434/v1" />
+          </div>
+
+          <div class="ai-row" style="align-items:center;gap:10px;flex-wrap:wrap">
+            <button class="btn primary" onclick="activateAI()">⚡ Activate AI Mode</button>
+            <button class="btn secondary" onclick="deactivateAI()">Use Route B</button>
+            <button class="btn secondary" onclick="testAIConnection()">Test Connection</button>
+          </div>
+
+          <div id="ai-status" class="ai-status info">
+            Enter your API key and click Activate to use AI formatting (Route C).
+          </div>
+
+        </div>
+      </div>
+      <!-- ──────────────────────────────────────────────────── -->
+
+    </div>
+
+  </div>
+</div>
+
+<!-- compromise.js: served locally, no CDN dependency -->
+<script src="./compromise.js"></script>
+
+<script>
+/* ============================================================
+   CantRead — Multi-language NLP Engine
+   Supports: English · Chinese · Mixed (中英混合)
+   ============================================================ */
+
+// ══════════════════════════════════════════════════════════════
+// § 1. STATE
+// ══════════════════════════════════════════════════════════════
+const state = {
+  mode: 'tabe',
+  theme: 'dark',
+  layers: { nouns: true, verbs: true, adjs: true, numbers: true }
+};
+
+// ══════════════════════════════════════════════════════════════
+// § 2. PRESETS — English / Chinese / Mixed
+// ══════════════════════════════════════════════════════════════
+const presets = {
+
+  // ── English ──────────────────────────────────────────────
+  en_networking: `# Networking Note — AI Mixer
+
+Met Sarah Chen at the AI startup mixer on Thursday. She is building a retrieval-augmented generation platform for enterprise clients. We discussed the challenges of chunking long documents into meaningful segments.
+
+Key takeaways from the evening: most founders are struggling with evaluation metrics. Nobody has a clean solution for measuring hallucination rates in production systems. Three companies mentioned using human reviewers as a fallback.
+
+Follow up with Sarah about her open-source evaluation framework. She mentioned releasing it in February with Apache 2.0 license. The GitHub repo already has 800 stars.
+
+Action items: schedule a coffee chat, read her technical blog post, join the Discord community she mentioned.`,
+
+  en_research: `# Reading Enhancement for Neurodivergent Users
+
+Bionic Reading was introduced in 2022 as a method to improve reading speed and comprehension. The technique bolds the first letters of each word to guide the reader's eye across the text.
+
+Studies suggest that readers with ADHD process text differently. Visual anchors reduce cognitive load by providing predictable focal points. The brain spends less energy on tracking and more on comprehension.
+
+The critical insight is that code editors have solved this problem for programming languages. Syntax highlighting applies semantic coloring based on grammatical role: keywords, strings, comments, identifiers. Natural language lacks formal grammar but NLP libraries can approximate it.`,
+
+  // ── Chinese ───────────────────────────────────────────────
+  zh_notes: `# 产品规划笔记
+
+这个插件的核心功能是在阅读视图里自动添加视觉格式化效果。用户不需要修改源文件，所有样式都在渲染层处理。
+
+主要挑战是中文分词问题。中文没有空格分隔单词，所以需要用词典匹配和规则引擎来识别词性。动词通常是句子的核心识别点，名词是标签层，形容词是补充说明。
+
+开发计划分三个阶段进行。第一阶段完成 Obsidian 插件的基础功能验证。第二阶段扩展到 Chrome 和 Firefox 浏览器插件。第三阶段考虑接入 AI 接口来提高语义准确度。
+
+目前使用本地 NLP 引擎，完全离线运行，不需要 API 密钥，对用户友好。`,
+
+  zh_adhd: `# ADHD 阅读体验研究
+
+大段纯文本对 ADHD 用户来说非常困难。眼睛在密集文字中失去落脚点，导致注意力容易飘散。视觉锚点可以帮助大脑建立节奏感。
+
+传统的生物阅读法只做机械处理，把每个词的前几个字母加粗。这种方法没有语义层，不能区分重要概念和补充说明。TABE 格式的核心创新是引入了多层次的语义强调。
+
+名词是概念标签，动词是动作识别点，形容词是修饰补充。三个层次配合使用，让眼睛能够快速扫描并抓住核心信息，不需要逐字解码。
+
+这个格式最初来自 Ahui 在找工作期间做 networking 记录时自然发展出来的写作习惯。用了之后发现回不去普通排版了。`,
+
+  // ── Mixed 中英混合 ────────────────────────────────────────
+  mixed_tabe: `# TABE Reader 开发日志
+
+这个项目从一个观察开始：Ahui 在 Obsidian vault 里用 TABE 格式写笔记，发现效果非常好。
+
+核心 insight 是 code editor 的语法高亮和 TABE 格式本质上是同一件事——用视觉信号区分语义角色。VS Code 把 keyword、string、comment 用不同颜色标出来，让程序员的眼睛可以快速扫描。TABE 想对自然语言做同样的事。
+
+技术路线分三条：路线 A 用机械算法（Bionic Reading 风格），路线 B 用本地 NLP（compromise.js），路线 C 接入 Claude 或 GPT API。我们先做路线 B，作为免费的基础层。
+
+Phase 0 的目标是做一个 Obsidian 插件。插件用 TypeScript 写，通过 registerMarkdownPostProcessor 钩入 Reading View，在渲染后的 DOM 上运行 NLP，不修改源文件。
+
+下一步是把同样的逻辑打包进浏览器插件，支持 Chrome 和 Firefox。WebExtensions API 两者兼容，代码复用率大约 90%。`,
+
+  mixed_networking: `# Networking Event 记录 — Tech Mixer @ SOMA
+
+参加了 Thursday 的 AI startup mixer，在 SOMA 的一个 coworking space 里举办，大概有 80 人。
+
+遇到了几个有意思的人：
+
+Sarah 在做 RAG（retrieval-augmented generation）平台，主要客户是 enterprise。她提到最大的技术挑战是 chunking strategy——怎么把长文档切成有意义的片段。她们目前用的是 semantic chunking，效果比固定大小的 sliding window 好很多。
+
+Kevin 在做 AI agent 的 evaluation framework。他说现在市面上缺一个标准化的 benchmark，每个公司都在自己定义 success metric，互相没法比较。他们想做一个类似 MMLU 但专门针对 agentic task 的评测集。
+
+最大的 takeaway：大家都在用 AI 构建产品，但 evaluation 和 observability 还是行业痛点。没有人能清楚解释自己的系统为什么有时候 work，有时候不 work。`,
+
+  // ── Manual TABE (已有手写格式) ────────────────────────────
+  manual: `# Manual TABE — 手写格式示例
+
+**Ahui** ==发现 Reading View 自动格式化效果不错== · *和手写 TABE 差不多* · **结论** ==这个插件能用==
+
+**核心功能** ==不改源文件== · Reading View 里自动渲染 · *本地 NLP 运行* · **无需 API key**
+
+This paragraph has no manual formatting. The plugin will auto-apply TABE formatting: verbs get highlighted, nouns bolded, adjectives green.
+
+**注意** ==已有格式的段落== · *插件自动跳过* · 不会双重格式化 · <u>这是动作项</u>`
+};
+
+// ══════════════════════════════════════════════════════════════
+// § 3. MULTI-LANGUAGE NLP ENGINE
+// ══════════════════════════════════════════════════════════════
+
+// ── 3a. Language Detection ─────────────────────────────────
+const CJK_RE   = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+const LATIN_RE = /[a-zA-Z]/;
+
+function detectLang(text) {
+  const hasCJK   = CJK_RE.test(text);
+  const hasLatin = LATIN_RE.test(text);
+  if (hasCJK && hasLatin) return 'mixed';
+  if (hasCJK)   return 'zh';
+  if (hasLatin) return 'en';
+  return 'other';
+}
+
+// ── 3b. Chinese Lexicons ────────────────────────────────────
+
+// Function / structural words → no highlight (connective tissue)
+const ZH_FUNCTION = new Set([
+  '的','地','得','了','着','过','和','与','及','或','但','而','却','也','都',
+  '就','才','又','再','还','已','在','到','从','对','为','被','把','让','由',
+  '以','于','向','往','给','跟','同','比','按','像','如','若','虽','即','凡',
+  '这','那','这个','那个','这些','那些','此','其','之','者','所','何','哪',
+  '是','有','没','不','非','无','否','很','太','更','最','极','挺','比较',
+  '我','你','他','她','它','我们','你们','他们','她们','它们','自己',
+  '什么','哪里','哪个','怎么','为什么','谁','哪','几','多少',
+  '吗','吧','啊','呢','哦','嗯','呀','哇','哈','嘛','咯','诶',
+  '然后','所以','因此','因为','但是','而且','不过','另外','同时','其次',
+  '一般','通常','往往','经常','总是','有时','偶尔','已经','正在','将要',
+  '一','二','三','四','五','六','七','八','九','十','这里','那里','这边',
+]);
+
+// Verbs → tabe-highlight (action / state — main recognition layer)
+const ZH_VERBS = new Set([
+  '做','写','说','看','听','走','跑','学','教','想','知','用','给','拿',
+  '买','卖','吃','喝','睡','起','开','关','来','去','到','进','出','上','下',
+  '发现','认为','觉得','感觉','相信','希望','担心','决定','计划','准备',
+  '开始','结束','完成','实现','建立','创建','设计','开发','构建','搭建',
+  '分析','研究','探索','测试','验证','优化','改进','解决','处理','管理',
+  '发布','部署','运行','执行','触发','调用','返回','生成','转换','提取',
+  '合并','拆分','过滤','排序','查询','存储','加载','下载','上传','同步',
+  '联系','沟通','交流','讨论','分享','推荐','介绍','展示','演示','汇报',
+  '找到','遇到','看到','听到','收到','获得','得到','拥有','失去','缺少',
+  '提高','降低','增加','减少','扩展','缩小','加速','减缓','改变','保持',
+  '支持','帮助','推动','阻止','影响','促进','导致','造成','引起','产生',
+  '回去','出来','进来','上去','下来','过来','过去','回来','起来','下去',
+  '参加','举办','遇到','认识','合作','加入','退出','申请','拒绝','接受',
+  '构成','包含','属于','代表','表示','说明','解释','定义','描述','记录',
+  '区分','识别','判断','评估','选择','比较','排除','确认','否定','假设',
+  '扫描','渲染','注入','解析','编译','打包','部署','监控','报错','调试',
+]);
+
+// Nouns → tabe-bold (labels / key concepts)
+const ZH_NOUNS = new Set([
+  // 技术名词
+  '插件','功能','模块','系统','平台','框架','工具','接口','数据','算法',
+  '模型','网络','服务','应用','程序','代码','文件','格式','结构','架构',
+  '用户','客户','产品','项目','版本','文档','报告','方案','策略','计划',
+  '问题','错误','结果','效果','性能','效率','质量','安全','稳定','可靠',
+  '浏览器','服务器','数据库','云端','本地','端口','协议','标准','规范',
+  '插件','扩展','脚本','样式','配置','参数','变量','函数','类','方法',
+  '前端','后端','全栈','接口','请求','响应','缓存','队列','线程','进程',
+  // 认知/阅读
+  '方法','方式','思路','逻辑','原则','规则','标准','目标','意义','价值',
+  '挑战','机会','优势','劣势','风险','收益','成本','资源','时间','空间',
+  '笔记','格式','排版','视觉','阅读','理解','记忆','注意力','专注','习惯',
+  '层次','层级','信号','锚点','节奏','落脚点','模式','规律','结构','体系',
+  // 社交/工作
+  '社区','团队','成员','角色','职责','权限','流程','步骤','阶段','周期',
+  '会议','活动','事件','机会','人脉','关系','背景','经验','能力','技能',
+  '创业者','工程师','研究员','设计师','产品经理','投资人','顾问','合伙人',
+  // 项目专有
+  'TABE','格式','格式化','语义','词性','名词','动词','形容词','副词',
+  '分词','分析','标注','高亮','加粗','斜体','下划线','颜色','样式',
+  '引擎','词典','规则','词库','模式','匹配','边界','切片','合并',
+  'Obsidian','vault','笔记本','阅读视图','编辑视图','预览','渲染',
+]);
+
+// Adjectives / descriptors → tabe-italic green (supplement layer)
+const ZH_ADJS = new Set([
+  '好','坏','大','小','多','少','快','慢','高','低','长','短','新','旧',
+  '重要','关键','核心','主要','次要','基本','简单','复杂','困难','容易',
+  '有效','无效','正确','错误','准确','精确','完整','完善','成熟','稳定',
+  '自动','手动','本地','远程','实时','异步','同步','并行','串行','独立',
+  '开源','免费','付费','商业','专业','通用','特定','专有','公共','私有',
+  '强大','灵活','轻量','高效','安全','可靠','易用','友好','清晰','直观',
+  '自然','流畅','丰富','简洁','优雅','规范','统一','标准','正式','随意',
+  '明显','显著','微小','巨大','深入','浅显','广泛','具体','抽象','直接',
+  '密集','稀疏','连续','离散','有序','无序','线性','非线性','递归','迭代',
+  '语义','句法','词法','词性','形式','内容','结构','功能','行为','状态',
+]);
+
+// ── 3c. Chinese Tokenizer ───────────────────────────────────
+
+function tokenizeZh(text, layers) {
+  const tokens = [];
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    // Digits / numbers
+    if (/\d/.test(ch)) {
+      let num = '';
+      while (i < text.length && /[\d.,，%％]/.test(text[i])) num += text[i++];
+      if (i < text.length && /[万亿千百十%％年月日]/.test(text[i])) num += text[i++];
+      tokens.push({ text: num, cls: layers.numbers ? 'tabe-number' : null });
+      continue;
+    }
+
+    // Whitespace / fullwidth space
+    if (/[\s\u3000\r\n]/.test(ch)) {
+      tokens.push({ text: ch, cls: null }); i++; continue;
+    }
+
+    // Punctuation
+    if (/[，。！？、；：""''【】《》（）…—～·\.,!?;:\-()[\]{}"']/.test(ch)) {
+      tokens.push({ text: ch, cls: null }); i++; continue;
+    }
+
+    // Greedy max-match (4 → 2 chars)
+    let matched = false;
+    for (let len = Math.min(4, text.length - i); len >= 2; len--) {
+      const word = text.slice(i, i + len);
+      if (ZH_FUNCTION.has(word)) {
+        tokens.push({ text: word, cls: null }); i += len; matched = true; break;
+      }
+      if (layers.verbs && ZH_VERBS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-highlight' }); i += len; matched = true; break;
+      }
+      if (layers.nouns && ZH_NOUNS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-bold' }); i += len; matched = true; break;
+      }
+      if (layers.adjs && ZH_ADJS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-italic' }); i += len; matched = true; break;
+      }
+    }
+
+    if (!matched) {
+      // Single-char fallback
+      let cls = null;
+      if (ZH_FUNCTION.has(ch)) {
+        cls = null;
+      } else if (layers.verbs && ZH_VERBS.has(ch)) {
+        cls = 'tabe-highlight';
+      } else if (layers.adjs && ZH_ADJS.has(ch)) {
+        cls = 'tabe-italic';
+      } else if (layers.nouns && ZH_NOUNS.has(ch)) {
+        cls = 'tabe-bold';
+      } else if (CJK_RE.test(ch) && layers.nouns) {
+        // Heuristic: unknown CJK char → likely noun (most common in Chinese)
+        cls = 'tabe-bold';
+      }
+      tokens.push({ text: ch, cls }); i++;
+    }
+  }
+
+  return mergeConsecutiveTokens(tokens);
+}
+
+// Merge adjacent tokens of the same class to reduce span clutter
+function mergeConsecutiveTokens(tokens) {
+  if (!tokens.length) return tokens;
+  const result = [Object.assign({}, tokens[0])];
+  for (let i = 1; i < tokens.length; i++) {
+    const prev = result[result.length - 1];
+    const cur  = tokens[i];
+    if (prev.cls && cur.cls === prev.cls
+        && !/[，。！？、；：…—]/.test(prev.text.slice(-1))) {
+      prev.text += cur.text;
+    } else {
+      result.push(Object.assign({}, cur));
+    }
+  }
+  return result;
+}
+
+// ── 3d. English Tokenizer (compromise.js) ──────────────────
+
+function tokenizeEn(text, layers) {
+  if (typeof nlp === 'undefined') return [{ text, cls: null }];
+  const tokens = [];
+  try {
+    const sentences = nlp(text).json({ tags: true });
+    for (const sent of sentences) {
+      for (const term of (sent.terms || [])) {
+        const tags = Array.isArray(term.tags) ? term.tags : [];
+        const has  = (...names) => names.some(n => tags.includes(n));
+
+        let cls = null;
+        if (layers.numbers && has('Value','Date','NumericValue','Cardinal','Ordinal')) cls = 'tabe-number';
+        else if (layers.nouns && has('ProperNoun','Noun'))    cls = 'tabe-bold';
+        else if (layers.verbs && has('Verb'))                 cls = 'tabe-highlight';
+        else if (layers.adjs && has('Adjective','Adverb'))    cls = 'tabe-italic';
+
+        if (term.pre)  tokens.push({ text: term.pre,  cls: null });
+        tokens.push({ text: term.text || '', cls: (cls && (term.text||'').trim()) ? cls : null });
+        if (term.post) tokens.push({ text: term.post, cls: null });
+      }
+    }
+  } catch(e) {
+    return [{ text, cls: null }];
+  }
+  return tokens;
+}
+
+// ── 3e. Mixed-language Splitter ─────────────────────────────
+
+function splitByScript(text) {
+  const segs = [];
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (CJK_RE.test(ch)) {
+      let seg = '';
+      while (i < text.length && !LATIN_RE.test(text[i])) {
+        seg += text[i++];
+      }
+      if (seg) segs.push({ text: seg, lang: 'zh' });
+    } else if (LATIN_RE.test(ch) || /\d/.test(ch)) {
+      let seg = '';
+      while (i < text.length && !CJK_RE.test(text[i])) seg += text[i++];
+      if (seg.trim()) segs.push({ text: seg, lang: 'en' });
+      else if (seg)   segs.push({ text: seg, lang: 'other' });
+    } else {
+      // punctuation / symbols between scripts
+      let seg = '';
+      while (i < text.length && !CJK_RE.test(text[i]) && !LATIN_RE.test(text[i]) && !/\d/.test(text[i])) {
+        seg += text[i++];
+      }
+      if (seg) segs.push({ text: seg, lang: 'other' });
+    }
+  }
+  return segs;
+}
+
+// ── 3f. Main entry ─────────────────────────────────────────
+
+function tokenizeTABE(text, layers) {
+  if (!text.trim()) return [{ text, cls: null }];
+  const lang = detectLang(text);
+
+  if (lang === 'en')    return tokenizeEn(text, layers);
+  if (lang === 'zh')    return tokenizeZh(text, layers);
+  if (lang === 'mixed') {
+    const all = [];
+    for (const seg of splitByScript(text)) {
+      if (seg.lang === 'zh')    all.push(...tokenizeZh(seg.text, layers));
+      else if (seg.lang === 'en') all.push(...tokenizeEn(seg.text, layers));
+      else                        all.push({ text: seg.text, cls: null });
+    }
+    return all;
+  }
+  return [{ text, cls: null }];
+}
+
+function tokensToHtml(tokens) {
+  return tokens.map(t => {
+    const e = escapeHtml(t.text);
+    return (t.cls && t.text.trim()) ? `<span class="${t.cls}">${e}</span>` : e;
+  }).join('');
+}
+
+function applyTABE(plainText) {
+  return tokensToHtml(tokenizeTABE(plainText, state.layers));
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 4. UTILITIES
+// ══════════════════════════════════════════════════════════════
+
+function escapeHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 5. MARKDOWN RENDERER
+// ══════════════════════════════════════════════════════════════
+
+function renderMarkdown(md) {
+  const lines = md.split('\n');
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const hm = line.match(/^(#{1,6})\s+(.+)/);
+    if (hm) { blocks.push({ type:'heading', level:hm[1].length, raw:hm[2] }); i++; continue; }
+    if (/^-{3,}$/.test(line.trim())) { blocks.push({ type:'hr' }); i++; continue; }
+    if (line.startsWith('```')) {
+      let code = ''; i++;
+      while (i < lines.length && !lines[i].startsWith('```')) { code += escapeHtml(lines[i]) + '\n'; i++; }
+      blocks.push({ type:'code', code:code.trimEnd() }); i++; continue;
+    }
+    if (line.startsWith('> ')) { blocks.push({ type:'blockquote', raw:line.slice(2) }); i++; continue; }
+    if (/^[*\-+]\s/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[*\-+]\s/.test(lines[i])) { items.push(lines[i].replace(/^[*\-+]\s/,'')); i++; }
+      blocks.push({ type:'ul', items }); continue;
+    }
+    if (/^\d+\.\s/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s/,'')); i++; }
+      blocks.push({ type:'ol', items }); continue;
+    }
+    if (!line.trim()) { i++; continue; }
+    let raw = '';
+    while (i < lines.length && lines[i].trim() && !lines[i].match(/^#{1,6}\s/) && !lines[i].startsWith('```') && !/^-{3,}$/.test(lines[i].trim())) {
+      raw += (raw ? ' ' : '') + lines[i]; i++;
+    }
+    if (raw) blocks.push({ type:'paragraph', raw });
+  }
+
+  return blocks.map(blockToHtml).join('\n');
+}
+
+function blockToHtml(b) {
+  switch (b.type) {
+    case 'hr':        return '<hr>';
+    case 'code':      return `<pre><code>${b.code}</code></pre>`;
+    case 'heading':   return `<h${b.level}>${inlineMarkdown(b.raw)}</h${b.level}>`;
+    case 'blockquote':return `<blockquote>${inlineMarkdown(b.raw)}</blockquote>`;
+    case 'ul':        return `<ul>${b.items.map(r=>`<li>${paraContent(r)}</li>`).join('')}</ul>`;
+    case 'ol':        return `<ol>${b.items.map(r=>`<li>${paraContent(r)}</li>`).join('')}</ol>`;
+    case 'paragraph': return `<p class="tabe-processed">${paraContent(b.raw)}</p>`;
+    default:          return '';
+  }
+}
+
+// Paragraph content: manual TABE → inlineMarkdown; auto → NLP
+function paraContent(raw) {
+  const hasManual = /\*\*|==|\*[^*]|<u>/.test(raw);
+  if (hasManual || state.mode !== 'tabe') return inlineMarkdown(raw);
+  // Run NLP on plain text, then style the · connector
+  return applyTABE(raw).replace(/·/g, '<span style="opacity:0.4;margin:0 1px">·</span>');
+}
+
+// Inline markdown for headings, blockquotes, manual paragraphs
+function inlineMarkdown(text) {
+  let t = escapeHtml(text);
+  t = t.replace(/==(.+?)==/g,    '<mark>$1</mark>');
+  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+  t = t.replace(/`([^`]+)`/g,    '<code>$1</code>');
+  t = t.replace(/·/g, '<span style="opacity:0.4;margin:0 1px">·</span>');
+  return t;
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 6. RENDER PIPELINE
+// ══════════════════════════════════════════════════════════════
+
+function render() {
+  const md   = document.getElementById('editor').value;
+  const view = document.getElementById('reading-view');
+  view.innerHTML = renderMarkdown(md);
+
+  // Stats
+  let processed = 0, skipped = 0;
+  view.querySelectorAll('p, li').forEach(el => {
+    if (state.mode === 'tabe' && el.querySelector('.tabe-bold,.tabe-highlight,.tabe-italic,.tabe-number')) processed++;
+    else skipped++;
+  });
+
+  const dot  = document.getElementById('status-dot');
+  const stat = document.getElementById('stats-text');
+  const lang = detectLang(md);
+  const langLabel = { en:'EN', zh:'ZH', mixed:'ZH+EN', other:'?' }[lang] || '?';
+  if (state.mode === 'tabe') {
+    dot.classList.remove('off');
+    stat.textContent = `${langLabel} · ${processed} formatted · ${skipped} skipped`;
+  } else {
+    dot.classList.add('off');
+    stat.textContent = 'TABE off';
+  }
+}
+
+let debTimer;
+function renderDebounced() {
+  clearTimeout(debTimer);
+  // Use longer debounce + AI render when Route C is active
+  if (typeof AI_STATE !== 'undefined' && AI_STATE.active) {
+    debTimer = setTimeout(renderWithAI, 600);
+  } else {
+    debTimer = setTimeout(render, 200);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 7. CONTROLS
+// ══════════════════════════════════════════════════════════════
+
+function setMode(mode) {
+  state.mode = mode;
+  document.getElementById('btn-tabe').classList.toggle('active', mode === 'tabe');
+  document.getElementById('btn-plain').classList.toggle('active', mode === 'plain');
+  document.getElementById('mode-badge').textContent = mode === 'tabe' ? 'TABE active' : 'Plain render';
+  if (typeof AI_STATE !== 'undefined' && AI_STATE.active) renderWithAI();
+  else render();
+}
+
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.body.className = state.theme;
+  document.getElementById('btn-theme').textContent = state.theme === 'dark' ? '☀ Light' : '🌙 Dark';
+}
+
+function toggleLayer(btn) {
+  const layer = btn.dataset.layer;
+  state.layers[layer] = !state.layers[layer];
+  btn.classList.toggle('on', state.layers[layer]);
+  render(); // layer toggles always use Route B (instant)
+}
+
+function loadPreset(name) {
+  document.getElementById('editor').value = presets[name];
+  render(); // Route B for instant preview; AI user can re-activate
+}
+
+// ── Init ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => loadPreset('mixed_tabe'));
+
+// ══════════════════════════════════════════════════════════════
+// § 8. AI API LAYER — Route C
+// ══════════════════════════════════════════════════════════════
+
+const AI_STATE = {
+  active: false,
+  provider: 'openai',
+  apiKey: '',
+  model: '',
+  baseUrl: '',
+};
+
+const PROVIDER_DEFAULTS = {
+  openai: { model: 'gpt-4o-mini', baseUrl: 'https://api.openai.com/v1' },
+  claude: { model: 'claude-3-5-haiku-20241022', baseUrl: '' },
+  custom: { model: 'llama3', baseUrl: 'http://localhost:11434/v1' },
+};
+
+// ── AI System Prompt ────────────────────────────────────────
+const TABE_SYSTEM_PROMPT = `You are a semantic text formatter for the TABE reading system.
+TABE helps neurodivergent readers (ADHD, ASD) by adding visual anchors to plain text.
+
+Your job: take the user's plain text and wrap words/phrases in TABE spans.
+
+TABE emphasis hierarchy (apply in this priority order):
+1. <span class="tabe-number">…</span>  → numbers, dates, percentages, statistics
+2. <span class="tabe-bold">…</span>    → key nouns, proper nouns, core concepts, labels
+3. <span class="tabe-highlight">…</span> → main verbs, actions, state-change words
+4. <span class="tabe-italic">…</span>  → adjectives, adverbs, qualifiers, supplements
+
+Rules:
+- Output ONLY the formatted HTML — no markdown, no explanation, no code fences
+- Preserve ALL original text, whitespace, and punctuation exactly
+- Do NOT wrap function words (the, a, of, 的, 了, 是, etc.) unless they are the focus
+- Do NOT double-wrap — each word gets at most one span
+- Connector dots "·" should stay unwrapped
+- For mixed Chinese-English text: apply rules to both languages simultaneously
+- Aim for ~30-40% of content words annotated — avoid over-annotating
+
+Examples:
+Input:  "Met Sarah Chen at the AI startup mixer on Thursday."
+Output: "Met <span class="tabe-bold">Sarah Chen</span> at the <span class="tabe-bold">AI startup mixer</span> on <span class="tabe-number">Thursday</span>."
+
+Input:  "这个插件的核心功能是自动格式化阅读视图。"
+Output: "这个<span class="tabe-bold">插件</span>的<span class="tabe-bold">核心功能</span>是<span class="tabe-highlight">自动格式化</span><span class="tabe-bold">阅读视图</span>。"`;
+
+// ── AI Panel UI ─────────────────────────────────────────────
+function toggleAIPanel() {
+  const body    = document.getElementById('ai-panel-body');
+  const chevron = document.getElementById('ai-panel-chevron');
+  body.classList.toggle('open');
+  chevron.textContent = body.classList.contains('open') ? '▴' : '▾';
+}
+
+function onProviderChange() {
+  const provider = document.getElementById('ai-provider').value;
+  const modelEl  = document.getElementById('ai-model');
+  const baseUrlField = document.getElementById('ai-baseurl-field');
+  const baseUrlEl    = document.getElementById('ai-baseurl');
+
+  modelEl.placeholder = PROVIDER_DEFAULTS[provider].model;
+  if (!modelEl.value) modelEl.value = '';
+
+  if (provider === 'custom') {
+    baseUrlField.style.display = 'flex';
+    if (!baseUrlEl.value) baseUrlEl.value = PROVIDER_DEFAULTS.custom.baseUrl;
+  } else {
+    baseUrlField.style.display = 'none';
+  }
+}
+
+function setAIStatus(type, msg) {
+  const el = document.getElementById('ai-status');
+  el.className = `ai-status ${type}`;
+  el.textContent = msg;
+}
+
+function activateAI() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey   = document.getElementById('ai-apikey').value.trim();
+  const model    = document.getElementById('ai-model').value.trim();
+  const baseUrl  = document.getElementById('ai-baseurl').value.trim();
+
+  if (!apiKey && provider !== 'custom') {
+    setAIStatus('error', '⚠ Please enter your API key first.');
+    return;
+  }
+
+  AI_STATE.active   = true;
+  AI_STATE.provider = provider;
+  AI_STATE.apiKey   = apiKey;
+  AI_STATE.model    = model || PROVIDER_DEFAULTS[provider].model;
+  AI_STATE.baseUrl  = baseUrl || PROVIDER_DEFAULTS[provider].baseUrl || '';
+
+  document.getElementById('ai-route-badge').className = 'ai-badge route-c';
+  document.getElementById('ai-route-badge').textContent = 'Route C: AI Active';
+  document.getElementById('status-text').textContent =
+    `${AI_STATE.model} · ${provider} · AI mode`;
+
+  setAIStatus('ok', `✅ AI Mode active — ${AI_STATE.model} (${provider}). Render will call the API.`);
+  render();
+}
+
+function deactivateAI() {
+  AI_STATE.active = false;
+  document.getElementById('ai-route-badge').className = 'ai-badge route-b';
+  document.getElementById('ai-route-badge').textContent = 'Route B: Local NLP';
+  document.getElementById('status-text').textContent = 'compromise.js NLP · local · no API';
+  setAIStatus('info', 'Switched back to Route B (local NLP). No API calls made.');
+  render();
+}
+
+async function testAIConnection() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey   = document.getElementById('ai-apikey').value.trim();
+  const model    = document.getElementById('ai-model').value.trim() || PROVIDER_DEFAULTS[provider].model;
+  const baseUrl  = document.getElementById('ai-baseurl').value.trim() || PROVIDER_DEFAULTS[provider].baseUrl || '';
+
+  if (!apiKey && provider !== 'custom') {
+    setAIStatus('error', '⚠ Please enter your API key first.');
+    return;
+  }
+
+  setAIStatus('busy', '⟳ Testing connection…');
+  try {
+    await callAI('Hello world. Testing TABE connection.', { provider, apiKey, model, baseUrl });
+    setAIStatus('ok', `✅ Connection OK! ${model} (${provider}) is responding.`);
+  } catch (e) {
+    setAIStatus('error', `❌ Connection failed: ${e.message}`);
+  }
+}
+
+// ── AI API Caller ───────────────────────────────────────────
+async function callAI(text, config) {
+  const { provider, apiKey, model, baseUrl } = config;
+
+  if (provider === 'claude') {
+    return callClaude(text, { apiKey, model });
+  } else {
+    // OpenAI or custom (OpenAI-compatible)
+    const url = (baseUrl || PROVIDER_DEFAULTS.openai.baseUrl) + '/chat/completions';
+    return callOpenAI(text, { apiKey, model, url });
+  }
+}
+
+async function callOpenAI(text, { apiKey, model, url }) {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: model || 'gpt-4o-mini',
+      max_tokens: 2048,
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: TABE_SYSTEM_PROMPT },
+        { role: 'user',   content: text },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const raw  = data.choices?.[0]?.message?.content ?? '';
+  return sanitizeAIOutput(raw, text);
+}
+
+async function callClaude(text, { apiKey, model }) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type':      'application/json',
+      'x-api-key':         apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: model || 'claude-3-5-haiku-20241022',
+      max_tokens: 2048,
+      system: TABE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: text }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const raw  = data.content?.[0]?.text ?? '';
+  return sanitizeAIOutput(raw, text);
+}
+
+// ── Sanitize AI output (allow only tabe-* spans) ────────────
+function sanitizeAIOutput(raw, originalText) {
+  if (!raw.trim()) return escapeHtml(originalText);
+
+  // Strip code fences if model wrapped output
+  let clean = raw.replace(/^```(?:html)?\n?/i, '').replace(/\n?```$/, '').trim();
+
+  const ALLOWED = /<span class="tabe-(bold|highlight|italic|number)">([\s\S]*?)<\/span>/g;
+  const parts = [];
+  let lastIndex = 0, match;
+
+  while ((match = ALLOWED.exec(clean)) !== null) {
+    if (match.index > lastIndex)
+      parts.push(escapeHtml(clean.slice(lastIndex, match.index)));
+    const cls       = match[1];
+    const inner     = match[2].replace(/<[^>]*>/g, '');
+    parts.push(`<span class="tabe-${cls}">${escapeHtml(inner)}</span>`);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < clean.length)
+    parts.push(escapeHtml(clean.slice(lastIndex)));
+
+  const result    = parts.join('');
+  const origLen   = originalText.replace(/\s/g,'').length;
+  const resultLen = result.replace(/<[^>]*>/g,'').replace(/&\w+;/g,'X').replace(/\s/g,'').length;
+
+  if (origLen > 0 && resultLen < origLen * 0.5) {
+    console.warn('[CantRead] AI output sanity check failed, using plain text');
+    return escapeHtml(originalText);
+  }
+  return result;
+}
+
+// ── Async render for AI mode ────────────────────────────────
+// When AI is active, render structure with Route B first,
+// then upgrade each paragraph via AI API calls
+async function renderWithAI() {
+  if (!AI_STATE.active) { render(); return; }
+
+  const view = document.getElementById('reading-view');
+
+  // First render structure with Route B as placeholder (instant)
+  render();
+
+  // Collect all plain paragraphs and list items
+  const paragraphs = Array.from(view.querySelectorAll('p, li'));
+  const toFormat = paragraphs.filter(p => {
+    const hasManual = p.querySelector('strong, em, mark, u');
+    return !hasManual && p.textContent.trim().length > 0;
+  });
+
+  if (toFormat.length === 0) {
+    setAIStatus('info', 'No plain paragraphs to format.');
+    return;
+  }
+
+  setAIStatus('busy', `⟳ Sending ${toFormat.length} paragraph(s) to ${AI_STATE.model}…`);
+
+  let done = 0;
+  for (const p of toFormat) {
+    const text = p.textContent.trim();
+    try {
+      const html = await callAI(text, AI_STATE);
+      p.innerHTML = html;
+      p.classList.add('tabe-processed');
+      done++;
+    } catch(e) {
+      console.warn('[CantRead] AI call failed for paragraph, keeping Route B result:', e);
+      setAIStatus('error', `⚠ AI error: ${e.message} — fell back to Route B for this paragraph`);
+    }
+  }
+  if (done === toFormat.length) {
+    setAIStatus('ok', `✅ AI formatted ${done}/${toFormat.length} paragraph(s) · ${AI_STATE.model}`);
+  }
+}
+</script>
+</body>
+</html>
