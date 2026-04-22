@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TABE Reader · Demo</title>
+  <title>CantRead</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ffe066'/><text y='.9em' font-size='80' x='10'>T</text></svg>" />
   <style>
     /* ── Reset & Base ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -395,6 +396,93 @@
     }
     .preset-bar label { font-size: 0.78rem; color: var(--text-muted); }
 
+    /* ── AI Panel ─────────────────────────────────────────── */
+    .ai-panel {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      gap: 8px;
+    }
+    .ai-panel-header:hover { background: var(--bg3); }
+    .ai-panel-header .ai-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .ai-badge.route-b { background: #2a3d2a; color: #a6e3a1; border: 1px solid #4a7a4a; }
+    .ai-badge.route-c { background: #3d2e00; color: #f9e2af; border: 1px solid #7a5a00; }
+    body.light .ai-badge.route-b { background: #d8f0d0; color: #2a6a2a; border-color: #90c080; }
+    body.light .ai-badge.route-c { background: #fff0c0; color: #7a5a00; border-color: #d4a000; }
+    .ai-panel-toggle { font-size: 0.85rem; margin-left: auto; }
+    .ai-panel-body {
+      padding: 16px 20px 20px;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ai-panel-body.open { display: flex; }
+    .ai-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .ai-field label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .ai-field select,
+    .ai-field input[type="text"],
+    .ai-field input[type="password"] {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .ai-field select:focus,
+    .ai-field input:focus { border-color: #ffe066; }
+    .ai-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .ai-row .ai-field { flex: 1; min-width: 140px; }
+    .ai-hint {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .ai-status {
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-radius: 7px;
+      display: none;
+    }
+    .ai-status.info  { background: var(--bg3); color: var(--text-muted); display: block; }
+    .ai-status.ok    { background: #1a3d1a; color: #a6e3a1; display: block; }
+    .ai-status.error { background: #3d1a1a; color: #f38ba8; display: block; }
+    .ai-status.busy  { background: #3d2e00; color: #f9e2af; display: block; }
+    body.light .ai-status.ok    { background: #d8f0d0; color: #2a6a2a; }
+    body.light .ai-status.error { background: #ffd5d5; color: #c00; }
+    body.light .ai-status.busy  { background: #fff0c0; color: #7a5a00; }
+
     /* ── Scrollbars ──────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -409,8 +497,8 @@
     <div class="logo">
       <div class="logo-mark">T</div>
       <div class="logo-text">
-        <h1>TABE Reader</h1>
-        <p>For brains that bounce off walls of text · Phase 0 Demo</p>
+        <h1>CantRead</h1>
+        <p>For brains that bounce off walls of text</p>
       </div>
     </div>
     <div class="header-controls">
@@ -485,6 +573,62 @@
         </div>
         <span id="stats-text"></span>
       </div>
+
+      <!-- ── Route C: AI API Panel ─────────────────────────── -->
+      <div class="ai-panel">
+        <div class="ai-panel-header" onclick="toggleAIPanel()">
+          <span>⚡ Route C — AI Formatter</span>
+          <span class="ai-badge route-b" id="ai-route-badge">Route B: Local NLP</span>
+          <span class="ai-panel-toggle" id="ai-panel-chevron">▾</span>
+        </div>
+        <div class="ai-panel-body" id="ai-panel-body">
+
+          <div class="ai-hint">
+            Upgrade to AI-powered TABE: send text to an LLM for semantic annotation.
+            Your API key stays in the browser — never sent to our servers.
+          </div>
+
+          <div class="ai-row">
+            <div class="ai-field">
+              <label>Provider</label>
+              <select id="ai-provider" onchange="onProviderChange()">
+                <option value="openai">OpenAI (GPT)</option>
+                <option value="claude">Claude (Anthropic)</option>
+                <option value="custom">Custom / Local LLM</option>
+              </select>
+            </div>
+            <div class="ai-field">
+              <label>Model</label>
+              <input type="text" id="ai-model" placeholder="gpt-4o-mini" />
+            </div>
+          </div>
+
+          <div class="ai-field">
+            <label>API Key</label>
+            <input type="password" id="ai-apikey"
+              placeholder="sk-… (OpenAI) · sk-ant-… (Claude) · or leave blank for local LLM" />
+          </div>
+
+          <div class="ai-field" id="ai-baseurl-field" style="display:none">
+            <label>Base URL <span style="font-weight:400;color:var(--text-muted)">(OpenAI-compatible endpoint)</span></label>
+            <input type="text" id="ai-baseurl"
+              placeholder="http://localhost:11434/v1" />
+          </div>
+
+          <div class="ai-row" style="align-items:center;gap:10px;flex-wrap:wrap">
+            <button class="btn primary" onclick="activateAI()">⚡ Activate AI Mode</button>
+            <button class="btn secondary" onclick="deactivateAI()">Use Route B</button>
+            <button class="btn secondary" onclick="testAIConnection()">Test Connection</button>
+          </div>
+
+          <div id="ai-status" class="ai-status info">
+            Enter your API key and click Activate to use AI formatting (Route C).
+          </div>
+
+        </div>
+      </div>
+      <!-- ──────────────────────────────────────────────────── -->
+
     </div>
 
   </div>
@@ -495,7 +639,7 @@
 
 <script>
 /* ============================================================
-   TABE Reader Demo — Multi-language NLP Engine
+   CantRead — Multi-language NLP Engine
    Supports: English · Chinese · Mixed (中英混合)
    ============================================================ */
 
@@ -970,7 +1114,15 @@ function render() {
 }
 
 let debTimer;
-function renderDebounced() { clearTimeout(debTimer); debTimer = setTimeout(render, 200); }
+function renderDebounced() {
+  clearTimeout(debTimer);
+  // Use longer debounce + AI render when Route C is active
+  if (typeof AI_STATE !== 'undefined' && AI_STATE.active) {
+    debTimer = setTimeout(renderWithAI, 600);
+  } else {
+    debTimer = setTimeout(render, 200);
+  }
+}
 
 // ══════════════════════════════════════════════════════════════
 // § 7. CONTROLS
@@ -981,7 +1133,8 @@ function setMode(mode) {
   document.getElementById('btn-tabe').classList.toggle('active', mode === 'tabe');
   document.getElementById('btn-plain').classList.toggle('active', mode === 'plain');
   document.getElementById('mode-badge').textContent = mode === 'tabe' ? 'TABE active' : 'Plain render';
-  render();
+  if (typeof AI_STATE !== 'undefined' && AI_STATE.active) renderWithAI();
+  else render();
 }
 
 function toggleTheme() {
@@ -994,16 +1147,293 @@ function toggleLayer(btn) {
   const layer = btn.dataset.layer;
   state.layers[layer] = !state.layers[layer];
   btn.classList.toggle('on', state.layers[layer]);
-  render();
+  render(); // layer toggles always use Route B (instant)
 }
 
 function loadPreset(name) {
   document.getElementById('editor').value = presets[name];
-  render();
+  render(); // Route B for instant preview; AI user can re-activate
 }
 
 // ── Init ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => loadPreset('mixed_tabe'));
+
+// ══════════════════════════════════════════════════════════════
+// § 8. AI API LAYER — Route C
+// ══════════════════════════════════════════════════════════════
+
+const AI_STATE = {
+  active: false,
+  provider: 'openai',
+  apiKey: '',
+  model: '',
+  baseUrl: '',
+};
+
+const PROVIDER_DEFAULTS = {
+  openai: { model: 'gpt-4o-mini', baseUrl: 'https://api.openai.com/v1' },
+  claude: { model: 'claude-3-5-haiku-20241022', baseUrl: '' },
+  custom: { model: 'llama3', baseUrl: 'http://localhost:11434/v1' },
+};
+
+// ── AI System Prompt ────────────────────────────────────────
+const TABE_SYSTEM_PROMPT = `You are a semantic text formatter for the TABE reading system.
+TABE helps neurodivergent readers (ADHD, ASD) by adding visual anchors to plain text.
+
+Your job: take the user's plain text and wrap words/phrases in TABE spans.
+
+TABE emphasis hierarchy (apply in this priority order):
+1. <span class="tabe-number">…</span>  → numbers, dates, percentages, statistics
+2. <span class="tabe-bold">…</span>    → key nouns, proper nouns, core concepts, labels
+3. <span class="tabe-highlight">…</span> → main verbs, actions, state-change words
+4. <span class="tabe-italic">…</span>  → adjectives, adverbs, qualifiers, supplements
+
+Rules:
+- Output ONLY the formatted HTML — no markdown, no explanation, no code fences
+- Preserve ALL original text, whitespace, and punctuation exactly
+- Do NOT wrap function words (the, a, of, 的, 了, 是, etc.) unless they are the focus
+- Do NOT double-wrap — each word gets at most one span
+- Connector dots "·" should stay unwrapped
+- For mixed Chinese-English text: apply rules to both languages simultaneously
+- Aim for ~30-40% of content words annotated — avoid over-annotating
+
+Examples:
+Input:  "Met Sarah Chen at the AI startup mixer on Thursday."
+Output: "Met <span class="tabe-bold">Sarah Chen</span> at the <span class="tabe-bold">AI startup mixer</span> on <span class="tabe-number">Thursday</span>."
+
+Input:  "这个插件的核心功能是自动格式化阅读视图。"
+Output: "这个<span class="tabe-bold">插件</span>的<span class="tabe-bold">核心功能</span>是<span class="tabe-highlight">自动格式化</span><span class="tabe-bold">阅读视图</span>。"`;
+
+// ── AI Panel UI ─────────────────────────────────────────────
+function toggleAIPanel() {
+  const body    = document.getElementById('ai-panel-body');
+  const chevron = document.getElementById('ai-panel-chevron');
+  body.classList.toggle('open');
+  chevron.textContent = body.classList.contains('open') ? '▴' : '▾';
+}
+
+function onProviderChange() {
+  const provider = document.getElementById('ai-provider').value;
+  const modelEl  = document.getElementById('ai-model');
+  const baseUrlField = document.getElementById('ai-baseurl-field');
+  const baseUrlEl    = document.getElementById('ai-baseurl');
+
+  modelEl.placeholder = PROVIDER_DEFAULTS[provider].model;
+  if (!modelEl.value) modelEl.value = '';
+
+  if (provider === 'custom') {
+    baseUrlField.style.display = 'flex';
+    if (!baseUrlEl.value) baseUrlEl.value = PROVIDER_DEFAULTS.custom.baseUrl;
+  } else {
+    baseUrlField.style.display = 'none';
+  }
+}
+
+function setAIStatus(type, msg) {
+  const el = document.getElementById('ai-status');
+  el.className = `ai-status ${type}`;
+  el.textContent = msg;
+}
+
+function activateAI() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey   = document.getElementById('ai-apikey').value.trim();
+  const model    = document.getElementById('ai-model').value.trim();
+  const baseUrl  = document.getElementById('ai-baseurl').value.trim();
+
+  if (!apiKey && provider !== 'custom') {
+    setAIStatus('error', '⚠ Please enter your API key first.');
+    return;
+  }
+
+  AI_STATE.active   = true;
+  AI_STATE.provider = provider;
+  AI_STATE.apiKey   = apiKey;
+  AI_STATE.model    = model || PROVIDER_DEFAULTS[provider].model;
+  AI_STATE.baseUrl  = baseUrl || PROVIDER_DEFAULTS[provider].baseUrl || '';
+
+  document.getElementById('ai-route-badge').className = 'ai-badge route-c';
+  document.getElementById('ai-route-badge').textContent = 'Route C: AI Active';
+  document.getElementById('status-text').textContent =
+    `${AI_STATE.model} · ${provider} · AI mode`;
+
+  setAIStatus('ok', `✅ AI Mode active — ${AI_STATE.model} (${provider}). Render will call the API.`);
+  render();
+}
+
+function deactivateAI() {
+  AI_STATE.active = false;
+  document.getElementById('ai-route-badge').className = 'ai-badge route-b';
+  document.getElementById('ai-route-badge').textContent = 'Route B: Local NLP';
+  document.getElementById('status-text').textContent = 'compromise.js NLP · local · no API';
+  setAIStatus('info', 'Switched back to Route B (local NLP). No API calls made.');
+  render();
+}
+
+async function testAIConnection() {
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey   = document.getElementById('ai-apikey').value.trim();
+  const model    = document.getElementById('ai-model').value.trim() || PROVIDER_DEFAULTS[provider].model;
+  const baseUrl  = document.getElementById('ai-baseurl').value.trim() || PROVIDER_DEFAULTS[provider].baseUrl || '';
+
+  if (!apiKey && provider !== 'custom') {
+    setAIStatus('error', '⚠ Please enter your API key first.');
+    return;
+  }
+
+  setAIStatus('busy', '⟳ Testing connection…');
+  try {
+    await callAI('Hello world. Testing TABE connection.', { provider, apiKey, model, baseUrl });
+    setAIStatus('ok', `✅ Connection OK! ${model} (${provider}) is responding.`);
+  } catch (e) {
+    setAIStatus('error', `❌ Connection failed: ${e.message}`);
+  }
+}
+
+// ── AI API Caller ───────────────────────────────────────────
+async function callAI(text, config) {
+  const { provider, apiKey, model, baseUrl } = config;
+
+  if (provider === 'claude') {
+    return callClaude(text, { apiKey, model });
+  } else {
+    // OpenAI or custom (OpenAI-compatible)
+    const url = (baseUrl || PROVIDER_DEFAULTS.openai.baseUrl) + '/chat/completions';
+    return callOpenAI(text, { apiKey, model, url });
+  }
+}
+
+async function callOpenAI(text, { apiKey, model, url }) {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: model || 'gpt-4o-mini',
+      max_tokens: 2048,
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: TABE_SYSTEM_PROMPT },
+        { role: 'user',   content: text },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const raw  = data.choices?.[0]?.message?.content ?? '';
+  return sanitizeAIOutput(raw, text);
+}
+
+async function callClaude(text, { apiKey, model }) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type':      'application/json',
+      'x-api-key':         apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: model || 'claude-3-5-haiku-20241022',
+      max_tokens: 2048,
+      system: TABE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: text }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const raw  = data.content?.[0]?.text ?? '';
+  return sanitizeAIOutput(raw, text);
+}
+
+// ── Sanitize AI output (allow only tabe-* spans) ────────────
+function sanitizeAIOutput(raw, originalText) {
+  if (!raw.trim()) return escapeHtml(originalText);
+
+  // Strip code fences if model wrapped output
+  let clean = raw.replace(/^```(?:html)?\n?/i, '').replace(/\n?```$/, '').trim();
+
+  const ALLOWED = /<span class="tabe-(bold|highlight|italic|number)">([\s\S]*?)<\/span>/g;
+  const parts = [];
+  let lastIndex = 0, match;
+
+  while ((match = ALLOWED.exec(clean)) !== null) {
+    if (match.index > lastIndex)
+      parts.push(escapeHtml(clean.slice(lastIndex, match.index)));
+    const cls       = match[1];
+    const inner     = match[2].replace(/<[^>]*>/g, '');
+    parts.push(`<span class="tabe-${cls}">${escapeHtml(inner)}</span>`);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < clean.length)
+    parts.push(escapeHtml(clean.slice(lastIndex)));
+
+  const result    = parts.join('');
+  const origLen   = originalText.replace(/\s/g,'').length;
+  const resultLen = result.replace(/<[^>]*>/g,'').replace(/&\w+;/g,'X').replace(/\s/g,'').length;
+
+  if (origLen > 0 && resultLen < origLen * 0.5) {
+    console.warn('[CantRead] AI output sanity check failed, using plain text');
+    return escapeHtml(originalText);
+  }
+  return result;
+}
+
+// ── Async render for AI mode ────────────────────────────────
+// When AI is active, render structure with Route B first,
+// then upgrade each paragraph via AI API calls
+async function renderWithAI() {
+  if (!AI_STATE.active) { render(); return; }
+
+  const view = document.getElementById('reading-view');
+
+  // First render structure with Route B as placeholder (instant)
+  render();
+
+  // Collect all plain paragraphs and list items
+  const paragraphs = Array.from(view.querySelectorAll('p, li'));
+  const toFormat = paragraphs.filter(p => {
+    const hasManual = p.querySelector('strong, em, mark, u');
+    return !hasManual && p.textContent.trim().length > 0;
+  });
+
+  if (toFormat.length === 0) {
+    setAIStatus('info', 'No plain paragraphs to format.');
+    return;
+  }
+
+  setAIStatus('busy', `⟳ Sending ${toFormat.length} paragraph(s) to ${AI_STATE.model}…`);
+
+  let done = 0;
+  for (const p of toFormat) {
+    const text = p.textContent.trim();
+    try {
+      const html = await callAI(text, AI_STATE);
+      p.innerHTML = html;
+      p.classList.add('tabe-processed');
+      done++;
+    } catch(e) {
+      console.warn('[CantRead] AI call failed for paragraph, keeping Route B result:', e);
+      setAIStatus('error', `⚠ AI error: ${e.message} — fell back to Route B for this paragraph`);
+    }
+  }
+  if (done === toFormat.length) {
+    setAIStatus('ok', `✅ AI formatted ${done}/${toFormat.length} paragraph(s) · ${AI_STATE.model}`);
+  }
+}
 </script>
 </body>
 </html>

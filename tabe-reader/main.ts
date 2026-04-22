@@ -1,72 +1,81 @@
-import { App, Plugin, PluginSettingTab, Setting, MarkdownPostProcessorContext, Command } from 'obsidian';
+import { App, Notice, Plugin, PluginSettingTab, Setting,
+         MarkdownPostProcessorContext, Command } from 'obsidian';
 import nlp from 'compromise';
 import { applyTABE, TABELayers } from './src/tabe-nlp';
+import { applyTABEWithAI, testConnection, AIConfig, AIProvider, PROVIDER_DEFAULTS } from './src/tabe-ai';
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 interface TABESettings {
+  // General
   enabled: boolean;
+  skipAlreadyFormatted: boolean;
+
+  // Route B — Local NLP layers
   highlightNouns: boolean;
   highlightVerbs: boolean;
   highlightAdjectives: boolean;
   highlightNumbers: boolean;
-  skipAlreadyFormatted: boolean;
+
+  // Route C — AI API
+  aiEnabled: boolean;
+  aiProvider: AIProvider;
+  aiApiKey: string;
+  aiModel: string;
+  aiBaseUrl: string;
+  /** Fall back to Route B if AI call fails */
+  aiFallbackToLocal: boolean;
 }
 
 const DEFAULT_SETTINGS: TABESettings = {
   enabled: true,
+  skipAlreadyFormatted: true,
+
   highlightNouns: true,
   highlightVerbs: true,
   highlightAdjectives: true,
   highlightNumbers: true,
-  skipAlreadyFormatted: true,
+
+  aiEnabled: false,
+  aiProvider: 'openai',
+  aiApiKey: '',
+  aiModel: 'gpt-4o-mini',
+  aiBaseUrl: '',
+  aiFallbackToLocal: true,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function hasManualFormatting(el: HTMLElement): boolean {
-  return (
-    el.querySelector('strong, em, mark, u') !== null ||
-    el.innerHTML.includes('==') ||
-    el.innerHTML.includes('<b>') ||
-    el.innerHTML.includes('<i>')
-  );
+  return el.querySelector('strong, em, mark, u') !== null;
 }
 
 function isInSkippedBlock(el: HTMLElement): boolean {
   const tag = el.tagName?.toLowerCase() ?? '';
-  const skippedTags = ['code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'th', 'td'];
-  if (skippedTags.includes(tag)) return true;
+  if (['code','pre','h1','h2','h3','h4','h5','h6','table','thead','tbody','th','td'].includes(tag)) return true;
   let parent = el.parentElement;
   while (parent) {
     const ptag = parent.tagName?.toLowerCase() ?? '';
-    if (['pre', 'code', 'blockquote'].includes(ptag)) return true;
+    if (['pre','code','blockquote'].includes(ptag)) return true;
     if (parent.classList.contains('frontmatter')) return true;
     parent = parent.parentElement;
   }
   return false;
 }
 
-// ─── Multi-language TABE processor ───────────────────────────────────────────
+// ─── Paragraph processor ─────────────────────────────────────────────────────
 
-/**
- * Apply TABE visual formatting using the multi-language engine.
- * Supports English, Chinese, and mixed (中英混合) text automatically.
- * Language is detected per-paragraph — no user config needed.
- */
-function processParagraph(el: HTMLElement, settings: TABESettings): void {
+async function processParagraph(el: HTMLElement, settings: TABESettings): Promise<void> {
   if (!settings.enabled) return;
   if (isInSkippedBlock(el)) return;
   if (settings.skipAlreadyFormatted && hasManualFormatting(el)) return;
 
-  // Only process text-only paragraphs
-  const hasComplexChildren = Array.from(el.childNodes).some(
-    (node) => node.nodeType === Node.ELEMENT_NODE
-  );
+  // Skip elements that already have child elements (complex DOM)
+  const hasComplexChildren = Array.from(el.childNodes).some(n => n.nodeType === Node.ELEMENT_NODE);
   if (hasComplexChildren) return;
 
-  const originalText = el.textContent ?? '';
-  if (!originalText.trim()) return;
+  const text = el.textContent ?? '';
+  if (!text.trim()) return;
 
   const layers: TABELayers = {
     nouns:   settings.highlightNouns,
@@ -75,87 +84,105 @@ function processParagraph(el: HTMLElement, settings: TABESettings): void {
     numbers: settings.highlightNumbers,
   };
 
-  // applyTABE from tabe-nlp.ts handles EN / ZH / mixed automatically
-  const formattedHTML = applyTABE(originalText, layers);
-  el.innerHTML = formattedHTML;
+  // ── Route C: AI ──────────────────────────────────────────
+  if (settings.aiEnabled && settings.aiApiKey) {
+    const aiConfig: AIConfig = {
+      provider: settings.aiProvider,
+      apiKey:   settings.aiApiKey,
+      model:    settings.aiModel || PROVIDER_DEFAULTS[settings.aiProvider].model,
+      baseUrl:  settings.aiBaseUrl || undefined,
+    };
+    try {
+      el.innerHTML = await applyTABEWithAI(text, aiConfig);
+      el.classList.add('tabe-processed', 'tabe-ai');
+      return;
+    } catch (e) {
+      console.warn('[CantRead] AI call failed, falling back to local NLP:', e);
+      if (!settings.aiFallbackToLocal) return;
+    }
+  }
+
+  // ── Route B: Local NLP ───────────────────────────────────
+  el.innerHTML = applyTABE(text, layers);
   el.classList.add('tabe-processed');
 }
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 
-export default class TABEReaderPlugin extends Plugin {
+export default class CantReadPlugin extends Plugin {
   settings: TABESettings = DEFAULT_SETTINGS;
 
   async onload() {
     await this.loadSettings();
 
-    // Register Reading View post-processor
+    // Reading View post-processor
     this.registerMarkdownPostProcessor(
-      (element: HTMLElement, context: MarkdownPostProcessorContext) => {
+      (element: HTMLElement, _ctx: MarkdownPostProcessorContext) => {
         if (!this.settings.enabled) return;
-
-        // Process all paragraph elements in the rendered view
-        const paragraphs = element.querySelectorAll('p, li');
-        paragraphs.forEach((p) => {
+        element.querySelectorAll('p, li').forEach(p => {
           processParagraph(p as HTMLElement, this.settings);
         });
       }
     );
 
-    // Toggle command: Cmd/Ctrl + Shift + T
+    // Toggle: Cmd/Ctrl + Shift + T
     this.addCommand({
-      id: 'toggle-tabe-formatting',
-      name: 'Toggle TABE formatting',
+      id:   'toggle-cantread',
+      name: 'Toggle CantRead formatting',
       hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 't' }],
       callback: () => {
         this.settings.enabled = !this.settings.enabled;
         this.saveSettings();
-        // Notify user
-        const state = this.settings.enabled ? 'enabled ✦' : 'disabled';
-        // @ts-ignore
-        new (this.app as any).Notice(`TABE Reader ${state}`);
-        // Trigger re-render of active leaf
+        new Notice(`CantRead ${this.settings.enabled ? 'enabled ✦' : 'disabled'}`);
         this.refreshActiveLeaf();
       },
     } as Command);
 
-    // Settings tab
-    this.addSettingTab(new TABESettingTab(this.app, this));
+    // Toggle AI: Cmd/Ctrl + Shift + A
+    this.addCommand({
+      id:   'toggle-cantread-ai',
+      name: 'Toggle CantRead AI mode',
+      hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'a' }],
+      callback: () => {
+        if (!this.settings.aiApiKey) {
+          new Notice('CantRead: Set your API key in Settings first.');
+          return;
+        }
+        this.settings.aiEnabled = !this.settings.aiEnabled;
+        this.saveSettings();
+        new Notice(`CantRead AI ${this.settings.aiEnabled ? 'enabled ✦ (Route C)' : 'disabled → Route B'}`);
+        this.refreshActiveLeaf();
+      },
+    } as Command);
 
-    console.log('TABE Reader loaded ✦');
+    this.addSettingTab(new CantReadSettingTab(this.app, this));
+    console.log('CantRead loaded ✦');
   }
 
-  onunload() {
-    console.log('TABE Reader unloaded');
-  }
+  onunload() { console.log('CantRead unloaded'); }
 
-  /** Force the active markdown leaf to re-render so toggle takes effect immediately */
   refreshActiveLeaf() {
-    const leaf = this.app.workspace.getActiveViewOfType(
-      // @ts-ignore – MarkdownView is available at runtime
-      (this.app as any).workspace.getLeavesOfType('markdown')[0]?.view?.constructor
-    );
-    if (leaf) {
+    try {
       // @ts-ignore
-      leaf.previewMode?.rerender(true);
-    }
+      this.app.workspace.getLeavesOfType('markdown').forEach((leaf: any) => {
+        leaf.view?.previewMode?.rerender(true);
+      });
+    } catch (_) {}
   }
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
+  async saveSettings() { await this.saveData(this.settings); }
 }
 
-// ─── Settings Tab UI ──────────────────────────────────────────────────────────
+// ─── Settings Tab ─────────────────────────────────────────────────────────────
 
-class TABESettingTab extends PluginSettingTab {
-  plugin: TABEReaderPlugin;
+class CantReadSettingTab extends PluginSettingTab {
+  plugin: CantReadPlugin;
 
-  constructor(app: App, plugin: TABEReaderPlugin) {
+  constructor(app: App, plugin: CantReadPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -164,91 +191,178 @@ class TABESettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'TABE Reader Settings' });
+    // ── Header ──────────────────────────────────────────────
+    containerEl.createEl('h2', { text: 'CantRead Settings' });
     containerEl.createEl('p', {
-      text: 'TABE-style formatting layers: bold (nouns) · highlight (verbs) · italic green (adjectives) · number accent',
+      text: 'For brains that bounce off walls of text.',
       cls: 'tabe-settings-desc',
     });
 
-    // Master toggle
-    new Setting(containerEl)
-      .setName('Enable TABE formatting')
-      .setDesc('Auto-apply TABE visual style in Reading View. Shortcut: Cmd/Ctrl + Shift + T')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.enabled).onChange(async (value) => {
-          this.plugin.settings.enabled = value;
-          await this.plugin.saveSettings();
-        })
-      );
+    // ── General ─────────────────────────────────────────────
+    containerEl.createEl('h3', { text: 'General' });
 
-    // Skip already formatted
+    new Setting(containerEl)
+      .setName('Enable CantRead')
+      .setDesc('Auto-apply TABE formatting in Reading View.  Shortcut: ⌘⇧T')
+      .addToggle(t => t.setValue(this.plugin.settings.enabled).onChange(async v => {
+        this.plugin.settings.enabled = v;
+        await this.plugin.saveSettings();
+      }));
+
     new Setting(containerEl)
       .setName('Skip manually formatted paragraphs')
-      .setDesc('If a paragraph already has bold / highlight / italic, leave it untouched.')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.skipAlreadyFormatted).onChange(async (value) => {
-          this.plugin.settings.skipAlreadyFormatted = value;
-          await this.plugin.saveSettings();
-        })
-      );
+      .setDesc('Paragraphs already using bold / highlight / italic are left untouched.')
+      .addToggle(t => t.setValue(this.plugin.settings.skipAlreadyFormatted).onChange(async v => {
+        this.plugin.settings.skipAlreadyFormatted = v;
+        await this.plugin.saveSettings();
+      }));
 
-    containerEl.createEl('h3', { text: 'Formatting Layers' });
+    // ── Route B: Local NLP ──────────────────────────────────
+    containerEl.createEl('h3', { text: 'Route B — Local NLP (free, offline)' });
+    containerEl.createEl('p', {
+      text: 'compromise.js for English · rule-based lexicon for Chinese · auto-detected per paragraph.',
+      cls: 'tabe-settings-desc',
+    });
 
-    // Nouns
-    new Setting(containerEl)
-      .setName('Bold — Nouns & Proper Nouns')
-      .setDesc('Wrap nouns in bold (font-weight: 700). The "label" layer of TABE.')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.highlightNouns).onChange(async (value) => {
-          this.plugin.settings.highlightNouns = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // Verbs
-    new Setting(containerEl)
-      .setName('Highlight — Main Verbs')
-      .setDesc('Wrap verbs in yellow highlight (#ffe066). The "main recognition point" layer.')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.highlightVerbs).onChange(async (value) => {
-          this.plugin.settings.highlightVerbs = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // Adjectives
-    new Setting(containerEl)
-      .setName('Italic green — Adjectives & Adverbs')
-      .setDesc('Wrap adjectives/adverbs in green italic. The "supplement" layer.')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.highlightAdjectives).onChange(async (value) => {
-          this.plugin.settings.highlightAdjectives = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // Numbers
-    new Setting(containerEl)
-      .setName('Accent — Numbers & Dates')
-      .setDesc('Give numbers and dates a distinct accent color (#e06c00).')
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.highlightNumbers).onChange(async (value) => {
-          this.plugin.settings.highlightNumbers = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // Color reference
-    containerEl.createEl('h3', { text: 'Color Reference' });
-    const colorTable = containerEl.createEl('table', { cls: 'tabe-color-table' });
-    const rows = [
-      ['**bold**', 'Nouns', '#000 / font-weight 700', 'tabe-bold'],
-      ['==highlight==', 'Verbs', '#ffe066 background', 'tabe-highlight'],
-      ['*italic*', 'Adjectives', '#4caf50 green', 'tabe-italic'],
-      ['123', 'Numbers', '#e06c00 orange', 'tabe-number'],
+    const layerSettings: Array<[keyof TABESettings, string, string]> = [
+      ['highlightNouns',      'Bold — Nouns & Proper Nouns',       'Labels and key concepts.'],
+      ['highlightVerbs',      'Highlight — Main Verbs',            'Actions and state-change words. Yellow background.'],
+      ['highlightAdjectives', 'Italic green — Adjectives & Adverbs','Qualifiers and supplements.'],
+      ['highlightNumbers',    'Accent — Numbers & Dates',          'Numeric values, dates, statistics.'],
     ];
-    rows.forEach(([syntax, role, color, cls]) => {
-      const tr = colorTable.createEl('tr');
+
+    layerSettings.forEach(([key, name, desc]) => {
+      new Setting(containerEl).setName(name).setDesc(desc)
+        .addToggle(t => t.setValue(this.plugin.settings[key] as boolean).onChange(async v => {
+          (this.plugin.settings[key] as boolean) = v;
+          await this.plugin.saveSettings();
+        }));
+    });
+
+    // ── Route C: AI API ─────────────────────────────────────
+    containerEl.createEl('h3', { text: 'Route C — AI API (semantic accuracy)' });
+    containerEl.createEl('p', {
+      text: 'Use your own API key. CantRead never stores or proxies keys — they stay in your Obsidian vault only.',
+      cls: 'tabe-settings-desc',
+    });
+
+    new Setting(containerEl)
+      .setName('Enable AI formatting')
+      .setDesc('Route C: send paragraphs to AI for semantic TABE annotation.  Shortcut: ⌘⇧A')
+      .addToggle(t => t.setValue(this.plugin.settings.aiEnabled).onChange(async v => {
+        this.plugin.settings.aiEnabled = v;
+        await this.plugin.saveSettings();
+        // Re-render to show/hide dependent fields
+        this.display();
+      }));
+
+    // Provider selector
+    new Setting(containerEl)
+      .setName('AI Provider')
+      .setDesc('OpenAI (gpt-4o-mini recommended) · Claude · Custom/Local (Ollama, LM Studio…)')
+      .addDropdown(dd => {
+        dd.addOption('openai',  'OpenAI');
+        dd.addOption('claude',  'Claude (Anthropic)');
+        dd.addOption('custom',  'Custom / Local LLM');
+        dd.setValue(this.plugin.settings.aiProvider);
+        dd.onChange(async (v: AIProvider) => {
+          this.plugin.settings.aiProvider = v;
+          // Auto-fill model default when switching provider
+          this.plugin.settings.aiModel   = PROVIDER_DEFAULTS[v].model;
+          this.plugin.settings.aiBaseUrl  = v === 'custom' ? PROVIDER_DEFAULTS.custom.baseUrl : '';
+          await this.plugin.saveSettings();
+          this.display();
+        });
+      });
+
+    // API Key
+    new Setting(containerEl)
+      .setName('API Key')
+      .setDesc(this.plugin.settings.aiProvider === 'claude'
+        ? 'Anthropic API key (sk-ant-…)'
+        : 'OpenAI API key (sk-…) or key for your custom endpoint')
+      .addText(text => {
+        text.inputEl.type = 'password';
+        text.setPlaceholder('sk-…')
+            .setValue(this.plugin.settings.aiApiKey)
+            .onChange(async v => {
+              this.plugin.settings.aiApiKey = v.trim();
+              await this.plugin.saveSettings();
+            });
+      });
+
+    // Model
+    new Setting(containerEl)
+      .setName('Model')
+      .setDesc('e.g. gpt-4o-mini · gpt-4o · claude-3-5-haiku-20241022 · llama3')
+      .addText(text => text
+        .setPlaceholder(PROVIDER_DEFAULTS[this.plugin.settings.aiProvider].model)
+        .setValue(this.plugin.settings.aiModel)
+        .onChange(async v => {
+          this.plugin.settings.aiModel = v.trim();
+          await this.plugin.saveSettings();
+        }));
+
+    // Custom base URL (only show for custom provider)
+    if (this.plugin.settings.aiProvider === 'custom') {
+      new Setting(containerEl)
+        .setName('Base URL')
+        .setDesc('OpenAI-compatible endpoint, e.g. http://localhost:11434/v1')
+        .addText(text => text
+          .setPlaceholder('http://localhost:11434/v1')
+          .setValue(this.plugin.settings.aiBaseUrl)
+          .onChange(async v => {
+            this.plugin.settings.aiBaseUrl = v.trim();
+            await this.plugin.saveSettings();
+          }));
+    }
+
+    // Fallback toggle
+    new Setting(containerEl)
+      .setName('Fall back to local NLP on AI error')
+      .setDesc('If the AI call fails (no internet, quota exceeded, etc.), use Route B automatically.')
+      .addToggle(t => t.setValue(this.plugin.settings.aiFallbackToLocal).onChange(async v => {
+        this.plugin.settings.aiFallbackToLocal = v;
+        await this.plugin.saveSettings();
+      }));
+
+    // Test connection button
+    new Setting(containerEl)
+      .setName('Test connection')
+      .setDesc('Send a short probe to verify your API key and model are working.')
+      .addButton(btn => {
+        btn.setButtonText('Test').onClick(async () => {
+          if (!this.plugin.settings.aiApiKey) {
+            new Notice('Please enter an API key first.');
+            return;
+          }
+          btn.setButtonText('Testing…').setDisabled(true);
+          const config: AIConfig = {
+            provider: this.plugin.settings.aiProvider,
+            apiKey:   this.plugin.settings.aiApiKey,
+            model:    this.plugin.settings.aiModel || PROVIDER_DEFAULTS[this.plugin.settings.aiProvider].model,
+            baseUrl:  this.plugin.settings.aiBaseUrl || undefined,
+          };
+          const result = await testConnection(config);
+          btn.setButtonText('Test').setDisabled(false);
+          if (result.ok) {
+            new Notice('✅ CantRead AI connection OK!');
+          } else {
+            new Notice(`❌ Connection failed: ${result.error}`);
+          }
+        });
+      });
+
+    // ── Color Reference ─────────────────────────────────────
+    containerEl.createEl('h3', { text: 'Color Reference' });
+    const tbl = containerEl.createEl('table', { cls: 'tabe-color-table' });
+    [
+      ['**bold**',      'Nouns',      '#000 bold',        'tabe-bold'],
+      ['==highlight==', 'Verbs',      '#ffe066 bg',       'tabe-highlight'],
+      ['*italic*',      'Adj/Adv',    '#4caf50 green',    'tabe-italic'],
+      ['123',           'Numbers',    '#e06c00 orange',   'tabe-number'],
+    ].forEach(([syntax, role, color, cls]) => {
+      const tr = tbl.createEl('tr');
       tr.createEl('td', { text: syntax });
       tr.createEl('td', { text: role });
       tr.createEl('td', { text: color });
