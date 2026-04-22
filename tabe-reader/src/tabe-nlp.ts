@@ -9,6 +9,8 @@
  *  - Mixed → split by script boundary, process each, merge
  */
 
+import nlp from 'compromise';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TABEClass = 'tabe-bold' | 'tabe-highlight' | 'tabe-italic' | 'tabe-number' | null;
@@ -199,11 +201,9 @@ function tokenizeZh(text: string, layers: TABELayers): TABEToken[] {
         cls = 'tabe-highlight';
       } else if (layers.adjs && ZH_ADJS.has(single)) {
         cls = 'tabe-italic';
-      } else if (layers.nouns && CJK_RE.test(single)) {
-        // Heuristic: standalone CJK chars that aren't function words
-        // are likely nouns (most common case in Chinese)
-        cls = 'tabe-bold';
       }
+      // Unknown CJK char — do NOT fallback to bold
+      // Only explicitly matched words get TABE spans
 
       tokens.push({ text: single, cls });
       i++;
@@ -234,18 +234,11 @@ function mergeConsecutive(tokens: TABEToken[]): TABEToken[] {
 // ─── English Tokenizer (compromise.js) ───────────────────────────────────────
 
 /**
- * Process English text using compromise.js.
- * Expects `nlp` to be available globally (loaded via script tag or bundled).
+ * Process English text using compromise.js (bundled via esbuild).
  */
 function tokenizeEn(text: string, layers: TABELayers): TABEToken[] {
-  // @ts-ignore — nlp injected globally
-  if (typeof nlp === 'undefined') {
-    return [{ text, cls: null }];
-  }
-
   const tokens: TABEToken[] = [];
   try {
-    // @ts-ignore
     const doc = nlp(text);
     const sentences = doc.json({ tags: true }) as Array<{ terms: Array<{ text: string; pre: string; post: string; tags: string[] }> }>;
 
