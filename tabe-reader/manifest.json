@@ -1,9 +1,9 @@
 {
   "id": "tabe-reader",
   "name": "TABE Reader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.0.0",
-  "description": "Automatically apply TABE-style visual formatting in Reading View. For brains that bounce off walls of text.",
+  "description": "Automatically apply TABE-style visual formatting in Reading View. For brains that bounce off walls of text. 献给被长篇大论劝退的你和我。",
   "author": "Ahui",
   "authorUrl": "https://github.com/CantRead",
   "fundingUrl": "",
