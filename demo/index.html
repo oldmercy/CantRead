@@ -432,11 +432,16 @@
         <span class="pane-badge">Edit freely</span>
       </div>
       <div class="preset-bar">
-        <label>Samples:</label>
-        <button class="btn" onclick="loadPreset('networking')">Networking Note</button>
-        <button class="btn" onclick="loadPreset('research')">Research Paper</button>
-        <button class="btn" onclick="loadPreset('manual')">Manual TABE</button>
-        <button class="btn" onclick="loadPreset('code')">Code Notes</button>
+        <label>🇺🇸 EN:</label>
+        <button class="btn" onclick="loadPreset('en_networking')">Networking</button>
+        <button class="btn" onclick="loadPreset('en_research')">Research</button>
+        <label style="margin-left:8px">🇨🇳 ZH:</label>
+        <button class="btn" onclick="loadPreset('zh_notes')">产品笔记</button>
+        <button class="btn" onclick="loadPreset('zh_adhd')">ADHD阅读</button>
+        <label style="margin-left:8px">🌐 Mix:</label>
+        <button class="btn" onclick="loadPreset('mixed_tabe')">TABE日志</button>
+        <button class="btn" onclick="loadPreset('mixed_networking')">Event记录</button>
+        <button class="btn" onclick="loadPreset('manual')">手写TABE</button>
       </div>
       <div class="pane-body">
         <textarea id="editor" spellcheck="false" oninput="renderDebounced()"></textarea>
@@ -490,19 +495,26 @@
 
 <script>
 /* ============================================================
-   TABE Reader Demo — core logic
+   TABE Reader Demo — Multi-language NLP Engine
+   Supports: English · Chinese · Mixed (中英混合)
    ============================================================ */
 
-// ── State ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// § 1. STATE
+// ══════════════════════════════════════════════════════════════
 const state = {
   mode: 'tabe',
   theme: 'dark',
   layers: { nouns: true, verbs: true, adjs: true, numbers: true }
 };
 
-// ── Presets ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// § 2. PRESETS — English / Chinese / Mixed
+// ══════════════════════════════════════════════════════════════
 const presets = {
-  networking: `# TABE Networking Note — Sample
+
+  // ── English ──────────────────────────────────────────────
+  en_networking: `# Networking Note — AI Mixer
 
 Met Sarah Chen at the AI startup mixer on Thursday. She is building a retrieval-augmented generation platform for enterprise clients. We discussed the challenges of chunking long documents into meaningful segments.
 
@@ -512,106 +524,353 @@ Follow up with Sarah about her open-source evaluation framework. She mentioned r
 
 Action items: schedule a coffee chat, read her technical blog post, join the Discord community she mentioned.`,
 
-  research: `# Reading Enhancement for Neurodivergent Users
+  en_research: `# Reading Enhancement for Neurodivergent Users
 
-Bionic Reading was introduced in 2022 by Renato Casuut as a method to improve reading speed and comprehension. The technique bolds the first letters of each word to guide the reader's eye across the text.
+Bionic Reading was introduced in 2022 as a method to improve reading speed and comprehension. The technique bolds the first letters of each word to guide the reader's eye across the text.
 
 Studies suggest that readers with ADHD process text differently. Visual anchors reduce cognitive load by providing predictable focal points. The brain spends less energy on tracking and more on comprehension.
 
-Several competing approaches exist in the market. Traditional bionic reading uses a mechanical algorithm. Semantic approaches like TABE attempt to encode meaning — distinguishing keywords from context, actions from descriptions.
-
 The critical insight is that code editors have solved this problem for programming languages. Syntax highlighting applies semantic coloring based on grammatical role: keywords, strings, comments, identifiers. Natural language lacks formal grammar but NLP libraries can approximate it.`,
 
-  manual: `# Manual TABE Note — Already Formatted
+  // ── Chinese ───────────────────────────────────────────────
+  zh_notes: `# 产品规划笔记
+
+这个插件的核心功能是在阅读视图里自动添加视觉格式化效果。用户不需要修改源文件，所有样式都在渲染层处理。
+
+主要挑战是中文分词问题。中文没有空格分隔单词，所以需要用词典匹配和规则引擎来识别词性。动词通常是句子的核心识别点，名词是标签层，形容词是补充说明。
+
+开发计划分三个阶段进行。第一阶段完成 Obsidian 插件的基础功能验证。第二阶段扩展到 Chrome 和 Firefox 浏览器插件。第三阶段考虑接入 AI 接口来提高语义准确度。
+
+目前使用本地 NLP 引擎，完全离线运行，不需要 API 密钥，对用户友好。`,
+
+  zh_adhd: `# ADHD 阅读体验研究
+
+大段纯文本对 ADHD 用户来说非常困难。眼睛在密集文字中失去落脚点，导致注意力容易飘散。视觉锚点可以帮助大脑建立节奏感。
+
+传统的生物阅读法只做机械处理，把每个词的前几个字母加粗。这种方法没有语义层，不能区分重要概念和补充说明。TABE 格式的核心创新是引入了多层次的语义强调。
+
+名词是概念标签，动词是动作识别点，形容词是修饰补充。三个层次配合使用，让眼睛能够快速扫描并抓住核心信息，不需要逐字解码。
+
+这个格式最初来自 Ahui 在找工作期间做 networking 记录时自然发展出来的写作习惯。用了之后发现回不去普通排版了。`,
+
+  // ── Mixed 中英混合 ────────────────────────────────────────
+  mixed_tabe: `# TABE Reader 开发日志
+
+这个项目从一个观察开始：Ahui 在 Obsidian vault 里用 TABE 格式写笔记，发现效果非常好。
+
+核心 insight 是 code editor 的语法高亮和 TABE 格式本质上是同一件事——用视觉信号区分语义角色。VS Code 把 keyword、string、comment 用不同颜色标出来，让程序员的眼睛可以快速扫描。TABE 想对自然语言做同样的事。
+
+技术路线分三条：路线 A 用机械算法（Bionic Reading 风格），路线 B 用本地 NLP（compromise.js），路线 C 接入 Claude 或 GPT API。我们先做路线 B，作为免费的基础层。
+
+Phase 0 的目标是做一个 Obsidian 插件。插件用 TypeScript 写，通过 registerMarkdownPostProcessor 钩入 Reading View，在渲染后的 DOM 上运行 NLP，不修改源文件。
+
+下一步是把同样的逻辑打包进浏览器插件，支持 Chrome 和 Firefox。WebExtensions API 两者兼容，代码复用率大约 90%。`,
+
+  mixed_networking: `# Networking Event 记录 — Tech Mixer @ SOMA
+
+参加了 Thursday 的 AI startup mixer，在 SOMA 的一个 coworking space 里举办，大概有 80 人。
+
+遇到了几个有意思的人：
+
+Sarah 在做 RAG（retrieval-augmented generation）平台，主要客户是 enterprise。她提到最大的技术挑战是 chunking strategy——怎么把长文档切成有意义的片段。她们目前用的是 semantic chunking，效果比固定大小的 sliding window 好很多。
+
+Kevin 在做 AI agent 的 evaluation framework。他说现在市面上缺一个标准化的 benchmark，每个公司都在自己定义 success metric，互相没法比较。他们想做一个类似 MMLU 但专门针对 agentic task 的评测集。
+
+最大的 takeaway：大家都在用 AI 构建产品，但 evaluation 和 observability 还是行业痛点。没有人能清楚解释自己的系统为什么有时候 work，有时候不 work。`,
+
+  // ── Manual TABE (已有手写格式) ────────────────────────────
+  manual: `# Manual TABE — 手写格式示例
 
 **Ahui** ==发现 Reading View 自动格式化效果不错== · *和手写 TABE 差不多* · **结论** ==这个插件能用==
 
-**核心功能** ==不改源文件== · Reading View 里自动渲染 · *compromise.js 本地运行* · **无需 API key**
+**核心功能** ==不改源文件== · Reading View 里自动渲染 · *本地 NLP 运行* · **无需 API key**
 
-This paragraph has no manual formatting so the plugin will auto-apply TABE NLP formatting to it. Words like verbs will be highlighted, nouns will be bolded, and adjectives rendered in green.
+This paragraph has no manual formatting. The plugin will auto-apply TABE formatting: verbs get highlighted, nouns bolded, adjectives green.
 
-**注意** ==已有格式的段落== · *插件自动跳过* · 不会双重格式化`,
-
-  code: `# TypeScript Notes — NLP Processing
-
-The compromise library provides a simple API for natural language processing in JavaScript. It runs entirely in the browser without any server calls.
-
-The registerMarkdownPostProcessor hook fires after Obsidian renders each note section. The element parameter gives direct access to the rendered HTML nodes.
-
-For each paragraph element, the plugin checks for existing markdown emphasis. Paragraphs containing bold or highlight markers get skipped. Clean paragraphs receive the TABE treatment.
-
-The build process uses esbuild to bundle TypeScript and compromise into a single file. This keeps installation simple — just three files in the plugins directory.`
+**注意** ==已有格式的段落== · *插件自动跳过* · 不会双重格式化 · <u>这是动作项</u>`
 };
 
-// ── Escape HTML ────────────────────────────────────────────
-function escapeHtml(t) {
-  return String(t)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+// ══════════════════════════════════════════════════════════════
+// § 3. MULTI-LANGUAGE NLP ENGINE
+// ══════════════════════════════════════════════════════════════
+
+// ── 3a. Language Detection ─────────────────────────────────
+const CJK_RE   = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+const LATIN_RE = /[a-zA-Z]/;
+
+function detectLang(text) {
+  const hasCJK   = CJK_RE.test(text);
+  const hasLatin = LATIN_RE.test(text);
+  if (hasCJK && hasLatin) return 'mixed';
+  if (hasCJK)   return 'zh';
+  if (hasLatin) return 'en';
+  return 'other';
 }
 
-// ── NLP: applyTABE ─────────────────────────────────────────
-// Called ONLY on plain-text strings (no HTML inside).
-// compromise v14 .json({tags:true}) returns:
-//   [{ terms: [{ text, pre, post, tags: ["Noun","Singular",...] }] }]
-// tags is an ARRAY of strings, not an object — use .includes()
-function applyTABE(plainText) {
-  if (!plainText.trim()) return escapeHtml(plainText);
-  if (typeof nlp === 'undefined') return escapeHtml(plainText);
+// ── 3b. Chinese Lexicons ────────────────────────────────────
 
-  let termList = [];
-  try {
-    const doc = nlp(plainText);
-    const sentences = doc.json({ tags: true });
-    sentences.forEach(sent => {
-      (sent.terms || []).forEach(t => termList.push(t));
-    });
-  } catch(e) {
-    return escapeHtml(plainText);
-  }
+// Function / structural words → no highlight (connective tissue)
+const ZH_FUNCTION = new Set([
+  '的','地','得','了','着','过','和','与','及','或','但','而','却','也','都',
+  '就','才','又','再','还','已','在','到','从','对','为','被','把','让','由',
+  '以','于','向','往','给','跟','同','比','按','像','如','若','虽','即','凡',
+  '这','那','这个','那个','这些','那些','此','其','之','者','所','何','哪',
+  '是','有','没','不','非','无','否','很','太','更','最','极','挺','比较',
+  '我','你','他','她','它','我们','你们','他们','她们','它们','自己',
+  '什么','哪里','哪个','怎么','为什么','谁','哪','几','多少',
+  '吗','吧','啊','呢','哦','嗯','呀','哇','哈','嘛','咯','诶',
+  '然后','所以','因此','因为','但是','而且','不过','另外','同时','其次',
+  '一般','通常','往往','经常','总是','有时','偶尔','已经','正在','将要',
+  '一','二','三','四','五','六','七','八','九','十','这里','那里','这边',
+]);
 
-  if (!termList.length) return escapeHtml(plainText);
+// Verbs → tabe-highlight (action / state — main recognition layer)
+const ZH_VERBS = new Set([
+  '做','写','说','看','听','走','跑','学','教','想','知','用','给','拿',
+  '买','卖','吃','喝','睡','起','开','关','来','去','到','进','出','上','下',
+  '发现','认为','觉得','感觉','相信','希望','担心','决定','计划','准备',
+  '开始','结束','完成','实现','建立','创建','设计','开发','构建','搭建',
+  '分析','研究','探索','测试','验证','优化','改进','解决','处理','管理',
+  '发布','部署','运行','执行','触发','调用','返回','生成','转换','提取',
+  '合并','拆分','过滤','排序','查询','存储','加载','下载','上传','同步',
+  '联系','沟通','交流','讨论','分享','推荐','介绍','展示','演示','汇报',
+  '找到','遇到','看到','听到','收到','获得','得到','拥有','失去','缺少',
+  '提高','降低','增加','减少','扩展','缩小','加速','减缓','改变','保持',
+  '支持','帮助','推动','阻止','影响','促进','导致','造成','引起','产生',
+  '回去','出来','进来','上去','下来','过来','过去','回来','起来','下去',
+  '参加','举办','遇到','认识','合作','加入','退出','申请','拒绝','接受',
+  '构成','包含','属于','代表','表示','说明','解释','定义','描述','记录',
+  '区分','识别','判断','评估','选择','比较','排除','确认','否定','假设',
+  '扫描','渲染','注入','解析','编译','打包','部署','监控','报错','调试',
+]);
 
-  let html = '';
-  for (const term of termList) {
-    // tags is an Array<string> e.g. ["Verb","PastTense"]
-    const tags = Array.isArray(term.tags) ? term.tags : [];
-    const txt  = term.text || '';
-    const pre  = term.pre  || '';
-    const post = term.post || '';
+// Nouns → tabe-bold (labels / key concepts)
+const ZH_NOUNS = new Set([
+  // 技术名词
+  '插件','功能','模块','系统','平台','框架','工具','接口','数据','算法',
+  '模型','网络','服务','应用','程序','代码','文件','格式','结构','架构',
+  '用户','客户','产品','项目','版本','文档','报告','方案','策略','计划',
+  '问题','错误','结果','效果','性能','效率','质量','安全','稳定','可靠',
+  '浏览器','服务器','数据库','云端','本地','端口','协议','标准','规范',
+  '插件','扩展','脚本','样式','配置','参数','变量','函数','类','方法',
+  '前端','后端','全栈','接口','请求','响应','缓存','队列','线程','进程',
+  // 认知/阅读
+  '方法','方式','思路','逻辑','原则','规则','标准','目标','意义','价值',
+  '挑战','机会','优势','劣势','风险','收益','成本','资源','时间','空间',
+  '笔记','格式','排版','视觉','阅读','理解','记忆','注意力','专注','习惯',
+  '层次','层级','信号','锚点','节奏','落脚点','模式','规律','结构','体系',
+  // 社交/工作
+  '社区','团队','成员','角色','职责','权限','流程','步骤','阶段','周期',
+  '会议','活动','事件','机会','人脉','关系','背景','经验','能力','技能',
+  '创业者','工程师','研究员','设计师','产品经理','投资人','顾问','合伙人',
+  // 项目专有
+  'TABE','格式','格式化','语义','词性','名词','动词','形容词','副词',
+  '分词','分析','标注','高亮','加粗','斜体','下划线','颜色','样式',
+  '引擎','词典','规则','词库','模式','匹配','边界','切片','合并',
+  'Obsidian','vault','笔记本','阅读视图','编辑视图','预览','渲染',
+]);
 
-    const has = (...names) => names.some(n => tags.includes(n));
+// Adjectives / descriptors → tabe-italic green (supplement layer)
+const ZH_ADJS = new Set([
+  '好','坏','大','小','多','少','快','慢','高','低','长','短','新','旧',
+  '重要','关键','核心','主要','次要','基本','简单','复杂','困难','容易',
+  '有效','无效','正确','错误','准确','精确','完整','完善','成熟','稳定',
+  '自动','手动','本地','远程','实时','异步','同步','并行','串行','独立',
+  '开源','免费','付费','商业','专业','通用','特定','专有','公共','私有',
+  '强大','灵活','轻量','高效','安全','可靠','易用','友好','清晰','直观',
+  '自然','流畅','丰富','简洁','优雅','规范','统一','标准','正式','随意',
+  '明显','显著','微小','巨大','深入','浅显','广泛','具体','抽象','直接',
+  '密集','稀疏','连续','离散','有序','无序','线性','非线性','递归','迭代',
+  '语义','句法','词法','词性','形式','内容','结构','功能','行为','状态',
+]);
 
-    let cls = null;
-    if (state.layers.numbers && has('Value','Date','NumericValue','Cardinal','Ordinal')) {
-      cls = 'tabe-number';
-    } else if (state.layers.nouns && has('ProperNoun','Noun')) {
-      cls = 'tabe-bold';
-    } else if (state.layers.verbs && has('Verb')) {
-      cls = 'tabe-highlight';
-    } else if (state.layers.adjs && has('Adjective','Adverb')) {
-      cls = 'tabe-italic';
+// ── 3c. Chinese Tokenizer ───────────────────────────────────
+
+function tokenizeZh(text, layers) {
+  const tokens = [];
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    // Digits / numbers
+    if (/\d/.test(ch)) {
+      let num = '';
+      while (i < text.length && /[\d.,，%％]/.test(text[i])) num += text[i++];
+      if (i < text.length && /[万亿千百十%％年月日]/.test(text[i])) num += text[i++];
+      tokens.push({ text: num, cls: layers.numbers ? 'tabe-number' : null });
+      continue;
     }
 
-    const ep = escapeHtml(pre);
-    const et = escapeHtml(txt);
-    const eo = escapeHtml(post);
+    // Whitespace / fullwidth space
+    if (/[\s\u3000\r\n]/.test(ch)) {
+      tokens.push({ text: ch, cls: null }); i++; continue;
+    }
 
-    if (cls && et.trim()) {
-      html += `${ep}<span class="${cls}">${et}</span>${eo}`;
+    // Punctuation
+    if (/[，。！？、；：""''【】《》（）…—～·\.,!?;:\-()[\]{}"']/.test(ch)) {
+      tokens.push({ text: ch, cls: null }); i++; continue;
+    }
+
+    // Greedy max-match (4 → 2 chars)
+    let matched = false;
+    for (let len = Math.min(4, text.length - i); len >= 2; len--) {
+      const word = text.slice(i, i + len);
+      if (ZH_FUNCTION.has(word)) {
+        tokens.push({ text: word, cls: null }); i += len; matched = true; break;
+      }
+      if (layers.verbs && ZH_VERBS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-highlight' }); i += len; matched = true; break;
+      }
+      if (layers.nouns && ZH_NOUNS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-bold' }); i += len; matched = true; break;
+      }
+      if (layers.adjs && ZH_ADJS.has(word)) {
+        tokens.push({ text: word, cls: 'tabe-italic' }); i += len; matched = true; break;
+      }
+    }
+
+    if (!matched) {
+      // Single-char fallback
+      let cls = null;
+      if (ZH_FUNCTION.has(ch)) {
+        cls = null;
+      } else if (layers.verbs && ZH_VERBS.has(ch)) {
+        cls = 'tabe-highlight';
+      } else if (layers.adjs && ZH_ADJS.has(ch)) {
+        cls = 'tabe-italic';
+      } else if (layers.nouns && ZH_NOUNS.has(ch)) {
+        cls = 'tabe-bold';
+      } else if (CJK_RE.test(ch) && layers.nouns) {
+        // Heuristic: unknown CJK char → likely noun (most common in Chinese)
+        cls = 'tabe-bold';
+      }
+      tokens.push({ text: ch, cls }); i++;
+    }
+  }
+
+  return mergeConsecutiveTokens(tokens);
+}
+
+// Merge adjacent tokens of the same class to reduce span clutter
+function mergeConsecutiveTokens(tokens) {
+  if (!tokens.length) return tokens;
+  const result = [Object.assign({}, tokens[0])];
+  for (let i = 1; i < tokens.length; i++) {
+    const prev = result[result.length - 1];
+    const cur  = tokens[i];
+    if (prev.cls && cur.cls === prev.cls
+        && !/[，。！？、；：…—]/.test(prev.text.slice(-1))) {
+      prev.text += cur.text;
     } else {
-      html += ep + et + eo;
+      result.push(Object.assign({}, cur));
     }
   }
-
-  return html || escapeHtml(plainText);
+  return result;
 }
 
-// ── Markdown → HTML ─────────────────────────────────────────
-// Two-pass: first parse block structure, then inline markup.
-// TABE NLP runs on the RAW text before inline markup so it
-// doesn't accidentally see HTML tags as words.
+// ── 3d. English Tokenizer (compromise.js) ──────────────────
+
+function tokenizeEn(text, layers) {
+  if (typeof nlp === 'undefined') return [{ text, cls: null }];
+  const tokens = [];
+  try {
+    const sentences = nlp(text).json({ tags: true });
+    for (const sent of sentences) {
+      for (const term of (sent.terms || [])) {
+        const tags = Array.isArray(term.tags) ? term.tags : [];
+        const has  = (...names) => names.some(n => tags.includes(n));
+
+        let cls = null;
+        if (layers.numbers && has('Value','Date','NumericValue','Cardinal','Ordinal')) cls = 'tabe-number';
+        else if (layers.nouns && has('ProperNoun','Noun'))    cls = 'tabe-bold';
+        else if (layers.verbs && has('Verb'))                 cls = 'tabe-highlight';
+        else if (layers.adjs && has('Adjective','Adverb'))    cls = 'tabe-italic';
+
+        if (term.pre)  tokens.push({ text: term.pre,  cls: null });
+        tokens.push({ text: term.text || '', cls: (cls && (term.text||'').trim()) ? cls : null });
+        if (term.post) tokens.push({ text: term.post, cls: null });
+      }
+    }
+  } catch(e) {
+    return [{ text, cls: null }];
+  }
+  return tokens;
+}
+
+// ── 3e. Mixed-language Splitter ─────────────────────────────
+
+function splitByScript(text) {
+  const segs = [];
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (CJK_RE.test(ch)) {
+      let seg = '';
+      while (i < text.length && !LATIN_RE.test(text[i])) {
+        seg += text[i++];
+      }
+      if (seg) segs.push({ text: seg, lang: 'zh' });
+    } else if (LATIN_RE.test(ch) || /\d/.test(ch)) {
+      let seg = '';
+      while (i < text.length && !CJK_RE.test(text[i])) seg += text[i++];
+      if (seg.trim()) segs.push({ text: seg, lang: 'en' });
+      else if (seg)   segs.push({ text: seg, lang: 'other' });
+    } else {
+      // punctuation / symbols between scripts
+      let seg = '';
+      while (i < text.length && !CJK_RE.test(text[i]) && !LATIN_RE.test(text[i]) && !/\d/.test(text[i])) {
+        seg += text[i++];
+      }
+      if (seg) segs.push({ text: seg, lang: 'other' });
+    }
+  }
+  return segs;
+}
+
+// ── 3f. Main entry ─────────────────────────────────────────
+
+function tokenizeTABE(text, layers) {
+  if (!text.trim()) return [{ text, cls: null }];
+  const lang = detectLang(text);
+
+  if (lang === 'en')    return tokenizeEn(text, layers);
+  if (lang === 'zh')    return tokenizeZh(text, layers);
+  if (lang === 'mixed') {
+    const all = [];
+    for (const seg of splitByScript(text)) {
+      if (seg.lang === 'zh')    all.push(...tokenizeZh(seg.text, layers));
+      else if (seg.lang === 'en') all.push(...tokenizeEn(seg.text, layers));
+      else                        all.push({ text: seg.text, cls: null });
+    }
+    return all;
+  }
+  return [{ text, cls: null }];
+}
+
+function tokensToHtml(tokens) {
+  return tokens.map(t => {
+    const e = escapeHtml(t.text);
+    return (t.cls && t.text.trim()) ? `<span class="${t.cls}">${e}</span>` : e;
+  }).join('');
+}
+
+function applyTABE(plainText) {
+  return tokensToHtml(tokenizeTABE(plainText, state.layers));
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 4. UTILITIES
+// ══════════════════════════════════════════════════════════════
+
+function escapeHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════════════════════
+// § 5. MARKDOWN RENDERER
+// ══════════════════════════════════════════════════════════════
+
 function renderMarkdown(md) {
   const lines = md.split('\n');
   const blocks = [];
@@ -619,188 +878,104 @@ function renderMarkdown(md) {
 
   while (i < lines.length) {
     const line = lines[i];
-
-    // Heading
     const hm = line.match(/^(#{1,6})\s+(.+)/);
-    if (hm) {
-      blocks.push({ type: 'heading', level: hm[1].length, raw: hm[2] });
-      i++; continue;
-    }
-
-    // HR
-    if (/^-{3,}$/.test(line.trim())) {
-      blocks.push({ type: 'hr' });
-      i++; continue;
-    }
-
-    // Fenced code block
+    if (hm) { blocks.push({ type:'heading', level:hm[1].length, raw:hm[2] }); i++; continue; }
+    if (/^-{3,}$/.test(line.trim())) { blocks.push({ type:'hr' }); i++; continue; }
     if (line.startsWith('```')) {
-      let code = '';
-      i++;
-      while (i < lines.length && !lines[i].startsWith('```')) {
-        code += escapeHtml(lines[i]) + '\n';
-        i++;
-      }
-      blocks.push({ type: 'code', code: code.trimEnd() });
-      i++; continue;
+      let code = ''; i++;
+      while (i < lines.length && !lines[i].startsWith('```')) { code += escapeHtml(lines[i]) + '\n'; i++; }
+      blocks.push({ type:'code', code:code.trimEnd() }); i++; continue;
     }
-
-    // Blockquote
-    if (line.startsWith('> ')) {
-      blocks.push({ type: 'blockquote', raw: line.slice(2) });
-      i++; continue;
-    }
-
-    // Unordered list
+    if (line.startsWith('> ')) { blocks.push({ type:'blockquote', raw:line.slice(2) }); i++; continue; }
     if (/^[*\-+]\s/.test(line)) {
       const items = [];
-      while (i < lines.length && /^[*\-+]\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^[*\-+]\s/, ''));
-        i++;
-      }
-      blocks.push({ type: 'ul', items });
-      continue;
+      while (i < lines.length && /^[*\-+]\s/.test(lines[i])) { items.push(lines[i].replace(/^[*\-+]\s/,'')); i++; }
+      blocks.push({ type:'ul', items }); continue;
     }
-
-    // Ordered list
     if (/^\d+\.\s/.test(line)) {
       const items = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^\d+\.\s/, ''));
-        i++;
-      }
-      blocks.push({ type: 'ol', items });
-      continue;
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s/,'')); i++; }
+      blocks.push({ type:'ol', items }); continue;
     }
-
-    // Empty line → skip
     if (!line.trim()) { i++; continue; }
-
-    // Paragraph: accumulate lines
     let raw = '';
-    while (
-      i < lines.length &&
-      lines[i].trim() &&
-      !lines[i].match(/^#{1,6}\s/) &&
-      !lines[i].startsWith('```') &&
-      !/^-{3,}$/.test(lines[i].trim())
-    ) {
-      raw += (raw ? ' ' : '') + lines[i];
-      i++;
+    while (i < lines.length && lines[i].trim() && !lines[i].match(/^#{1,6}\s/) && !lines[i].startsWith('```') && !/^-{3,}$/.test(lines[i].trim())) {
+      raw += (raw ? ' ' : '') + lines[i]; i++;
     }
-    if (raw) blocks.push({ type: 'paragraph', raw });
-    continue;
+    if (raw) blocks.push({ type:'paragraph', raw });
   }
 
-  // Render blocks to HTML strings
-  return blocks.map(b => blockToHtml(b)).join('\n');
+  return blocks.map(blockToHtml).join('\n');
 }
 
-// Render a parsed block to HTML.
-// For paragraphs: if TABE mode is on and no manual formatting detected,
-//   we apply NLP on the RAW text, then wrap the result in <p>.
-// For everything else, we run inlineMarkdown on the raw text.
 function blockToHtml(b) {
   switch (b.type) {
-    case 'hr':
-      return '<hr>';
-    case 'code':
-      return `<pre><code>${b.code}</code></pre>`;
-    case 'heading':
-      return `<h${b.level}>${inlineMarkdown(b.raw)}</h${b.level}>`;
-    case 'blockquote':
-      return `<blockquote>${inlineMarkdown(b.raw)}</blockquote>`;
-    case 'ul': {
-      const items = b.items.map(raw => `<li>${renderParagraphContent(raw)}</li>`).join('');
-      return `<ul>${items}</ul>`;
-    }
-    case 'ol': {
-      const items = b.items.map(raw => `<li>${renderParagraphContent(raw)}</li>`).join('');
-      return `<ol>${items}</ol>`;
-    }
-    case 'paragraph':
-      return `<p class="tabe-processed">${renderParagraphContent(b.raw)}</p>`;
-    default:
-      return '';
+    case 'hr':        return '<hr>';
+    case 'code':      return `<pre><code>${b.code}</code></pre>`;
+    case 'heading':   return `<h${b.level}>${inlineMarkdown(b.raw)}</h${b.level}>`;
+    case 'blockquote':return `<blockquote>${inlineMarkdown(b.raw)}</blockquote>`;
+    case 'ul':        return `<ul>${b.items.map(r=>`<li>${paraContent(r)}</li>`).join('')}</ul>`;
+    case 'ol':        return `<ol>${b.items.map(r=>`<li>${paraContent(r)}</li>`).join('')}</ol>`;
+    case 'paragraph': return `<p class="tabe-processed">${paraContent(b.raw)}</p>`;
+    default:          return '';
   }
 }
 
-// Decide how to render a paragraph's inline content:
-// - If it has manual TABE markers (**bold**, ==hl==, *italic*) → just do inlineMarkdown
-// - If TABE mode ON → applyTABE(rawText), then wrap connector dots
-// - Otherwise → inlineMarkdown
-function renderParagraphContent(raw) {
+// Paragraph content: manual TABE → inlineMarkdown; auto → NLP
+function paraContent(raw) {
   const hasManual = /\*\*|==|\*[^*]|<u>/.test(raw);
-
-  if (hasManual || state.mode !== 'tabe') {
-    return inlineMarkdown(raw);
-  }
-
-  // Apply NLP on plain raw text (no HTML inside yet)
-  let html = applyTABE(raw);
-
-  // Style the · connector dot after NLP (it won't be a "word")
-  html = html.replace(/·/g, '<span style="opacity:0.45;margin:0 1px">·</span>');
-
-  return html;
+  if (hasManual || state.mode !== 'tabe') return inlineMarkdown(raw);
+  // Run NLP on plain text, then style the · connector
+  return applyTABE(raw).replace(/·/g, '<span style="opacity:0.4;margin:0 1px">·</span>');
 }
 
-// ── Inline markdown (for headings, blockquotes, manual-TABE paragraphs) ──
+// Inline markdown for headings, blockquotes, manual paragraphs
 function inlineMarkdown(text) {
   let t = escapeHtml(text);
-  t = t.replace(/==(.+?)==/g, '<mark>$1</mark>');
-  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/==(.+?)==/g,    '<mark>$1</mark>');
+  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   t = t.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
-  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-  t = t.replace(/·/g, '<span style="opacity:0.45;margin:0 1px">·</span>');
+  t = t.replace(/`([^`]+)`/g,    '<code>$1</code>');
+  t = t.replace(/·/g, '<span style="opacity:0.4;margin:0 1px">·</span>');
   return t;
 }
 
-// ── Render pipeline ─────────────────────────────────────────
-let stats = { total: 0, processed: 0, skipped: 0 };
+// ══════════════════════════════════════════════════════════════
+// § 6. RENDER PIPELINE
+// ══════════════════════════════════════════════════════════════
 
 function render() {
   const md   = document.getElementById('editor').value;
   const view = document.getElementById('reading-view');
-
   view.innerHTML = renderMarkdown(md);
 
-  // Count stats from rendered DOM
-  stats = { total: 0, processed: 0, skipped: 0 };
+  // Stats
+  let processed = 0, skipped = 0;
   view.querySelectorAll('p, li').forEach(el => {
-    stats.total++;
-    if (el.classList.contains('tabe-processed') && state.mode === 'tabe') {
-      // check if we actually ran NLP (no manual markers in source)
-      if (el.querySelector('.tabe-bold, .tabe-highlight, .tabe-italic, .tabe-number')) {
-        stats.processed++;
-      } else {
-        stats.skipped++;
-      }
-    }
+    if (state.mode === 'tabe' && el.querySelector('.tabe-bold,.tabe-highlight,.tabe-italic,.tabe-number')) processed++;
+    else skipped++;
   });
-  updateStats();
-}
 
-function updateStats() {
   const dot  = document.getElementById('status-dot');
-  const text = document.getElementById('stats-text');
+  const stat = document.getElementById('stats-text');
+  const lang = detectLang(md);
+  const langLabel = { en:'EN', zh:'ZH', mixed:'ZH+EN', other:'?' }[lang] || '?';
   if (state.mode === 'tabe') {
     dot.classList.remove('off');
-    text.textContent = `${stats.processed} paragraphs NLP-formatted · ${stats.skipped} manual/plain`;
+    stat.textContent = `${langLabel} · ${processed} formatted · ${skipped} skipped`;
   } else {
     dot.classList.add('off');
-    text.textContent = 'TABE off — plain render';
+    stat.textContent = 'TABE off';
   }
 }
 
-// ── Debounce ────────────────────────────────────────────────
 let debTimer;
-function renderDebounced() {
-  clearTimeout(debTimer);
-  debTimer = setTimeout(render, 220);
-}
+function renderDebounced() { clearTimeout(debTimer); debTimer = setTimeout(render, 200); }
 
-// ── Controls ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// § 7. CONTROLS
+// ══════════════════════════════════════════════════════════════
+
 function setMode(mode) {
   state.mode = mode;
   document.getElementById('btn-tabe').classList.toggle('active', mode === 'tabe');
@@ -828,9 +1003,7 @@ function loadPreset(name) {
 }
 
 // ── Init ────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  loadPreset('networking');
-});
+window.addEventListener('DOMContentLoaded', () => loadPreset('mixed_tabe'));
 </script>
 </body>
 </html>

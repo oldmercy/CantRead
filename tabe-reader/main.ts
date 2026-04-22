@@ -1,5 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, MarkdownPostProcessorContext, Command } from 'obsidian';
 import nlp from 'compromise';
+import { applyTABE, TABELayers } from './src/tabe-nlp';
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 
@@ -23,10 +24,6 @@ const DEFAULT_SETTINGS: TABESettings = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Detect if a paragraph already has manual TABE / markdown emphasis.
- * If so, skip auto-formatting to avoid double-processing.
- */
 function hasManualFormatting(el: HTMLElement): boolean {
   return (
     el.querySelector('strong, em, mark, u') !== null ||
@@ -36,15 +33,10 @@ function hasManualFormatting(el: HTMLElement): boolean {
   );
 }
 
-/**
- * Check whether a node is inside a block we should never touch:
- * code blocks, frontmatter, headings, tables, blockquotes.
- */
 function isInSkippedBlock(el: HTMLElement): boolean {
   const tag = el.tagName?.toLowerCase() ?? '';
   const skippedTags = ['code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'th', 'td'];
   if (skippedTags.includes(tag)) return true;
-
   let parent = el.parentElement;
   while (parent) {
     const ptag = parent.tagName?.toLowerCase() ?? '';
@@ -55,105 +47,19 @@ function isInSkippedBlock(el: HTMLElement): boolean {
   return false;
 }
 
-/**
- * Escape HTML special characters before inserting raw text.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-// ─── Core NLP formatter ───────────────────────────────────────────────────────
+// ─── Multi-language TABE processor ───────────────────────────────────────────
 
 /**
- * Apply TABE visual formatting to a plain text string using compromise.js.
- *
- * Emphasis hierarchy (mirrors TABE manual convention):
- *   **bold**      → nouns / proper nouns  → .tabe-bold
- *   ==highlight== → main verbs            → .tabe-highlight
- *   *italic*      → adjectives / adverbs  → .tabe-italic  (rendered green)
- *   special       → numbers / dates       → .tabe-number
+ * Apply TABE visual formatting using the multi-language engine.
+ * Supports English, Chinese, and mixed (中英混合) text automatically.
+ * Language is detected per-paragraph — no user config needed.
  */
-function applyTABEFormatting(text: string, settings: TABESettings): string {
-  if (!text.trim()) return escapeHtml(text);
-
-  const doc = nlp(text);
-
-  // Build a token-level annotation map
-  // compromise gives us term offsets we can use to reconstruct annotated HTML
-  type Annotation = 'noun' | 'verb' | 'adj' | 'number' | 'none';
-
-  interface Token {
-    text: string;
-    pre: string;
-    post: string;
-    annotation: Annotation;
-  }
-
-  const tokens: Token[] = [];
-
-  // Iterate over each term in the doc
-  doc.forEach((sent: any) => {
-    sent.terms().forEach((term: any) => {
-      const tags: string[] = Object.keys(term.tags ?? {});
-      let annotation: Annotation = 'none';
-
-      if (settings.highlightNumbers && (tags.includes('Value') || tags.includes('Date') || tags.includes('NumericValue'))) {
-        annotation = 'number';
-      } else if (settings.highlightNouns && (tags.includes('ProperNoun') || tags.includes('Noun'))) {
-        annotation = 'noun';
-      } else if (settings.highlightVerbs && tags.includes('Verb')) {
-        annotation = 'verb';
-      } else if (settings.highlightAdjectives && (tags.includes('Adjective') || tags.includes('Adverb'))) {
-        annotation = 'adj';
-      }
-
-      tokens.push({
-        text: term.text ?? '',
-        pre: term.pre ?? '',
-        post: term.post ?? '',
-        annotation,
-      });
-    });
-  });
-
-  // Reconstruct HTML from tokens
-  let html = '';
-  for (const token of tokens) {
-    const escapedPre = escapeHtml(token.pre);
-    const escapedText = escapeHtml(token.text);
-    const escapedPost = escapeHtml(token.post);
-
-    if (token.annotation === 'none' || !escapedText) {
-      html += escapedPre + escapedText + escapedPost;
-      continue;
-    }
-
-    const classMap: Record<Annotation, string> = {
-      noun: 'tabe-bold',
-      verb: 'tabe-highlight',
-      adj: 'tabe-italic',
-      number: 'tabe-number',
-      none: '',
-    };
-
-    const cls = classMap[token.annotation];
-    html += `${escapedPre}<span class="${cls}">${escapedText}</span>${escapedPost}`;
-  }
-
-  return html || escapeHtml(text);
-}
-
-// ─── Process a single paragraph element ───────────────────────────────────────
-
 function processParagraph(el: HTMLElement, settings: TABESettings): void {
   if (!settings.enabled) return;
   if (isInSkippedBlock(el)) return;
   if (settings.skipAlreadyFormatted && hasManualFormatting(el)) return;
 
-  // Only process text-only paragraphs (avoid breaking complex DOM)
+  // Only process text-only paragraphs
   const hasComplexChildren = Array.from(el.childNodes).some(
     (node) => node.nodeType === Node.ELEMENT_NODE
   );
@@ -162,7 +68,15 @@ function processParagraph(el: HTMLElement, settings: TABESettings): void {
   const originalText = el.textContent ?? '';
   if (!originalText.trim()) return;
 
-  const formattedHTML = applyTABEFormatting(originalText, settings);
+  const layers: TABELayers = {
+    nouns:   settings.highlightNouns,
+    verbs:   settings.highlightVerbs,
+    adjs:    settings.highlightAdjectives,
+    numbers: settings.highlightNumbers,
+  };
+
+  // applyTABE from tabe-nlp.ts handles EN / ZH / mixed automatically
+  const formattedHTML = applyTABE(originalText, layers);
   el.innerHTML = formattedHTML;
   el.classList.add('tabe-processed');
 }
