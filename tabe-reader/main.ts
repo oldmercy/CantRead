@@ -1,6 +1,5 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting,
+import { App, MarkdownView, Notice, Plugin, PluginSettingTab, Setting,
          MarkdownPostProcessorContext, Command } from 'obsidian';
-import nlp from 'compromise';
 import { applyTABE, TABELayers } from './src/tabe-nlp';
 import { applyTABEWithAI, testConnection, AIConfig, AIProvider, PROVIDER_DEFAULTS } from './src/tabe-ai';
 
@@ -111,9 +110,20 @@ async function processParagraph(el: HTMLElement, settings: TABESettings): Promis
 
 export default class CantReadPlugin extends Plugin {
   settings: TABESettings = DEFAULT_SETTINGS;
+  ribbonIcon: HTMLElement | null = null;
 
   async onload() {
     await this.loadSettings();
+
+    // ── Ribbon icon with persistent ON/OFF state ───────────────────
+    this.ribbonIcon = this.addRibbonIcon('book-open', 'CantRead', () => {
+      this.settings.enabled = !this.settings.enabled;
+      this.saveSettings();
+      this.updateRibbonIcon();
+      new Notice(`CantRead ${this.settings.enabled ? 'enabled ✦' : 'disabled'}`);
+      this.refreshActiveLeaf();
+    });
+    this.updateRibbonIcon();
 
     // Reading View post-processor
     this.registerMarkdownPostProcessor(
@@ -133,6 +143,7 @@ export default class CantReadPlugin extends Plugin {
       callback: () => {
         this.settings.enabled = !this.settings.enabled;
         this.saveSettings();
+        this.updateRibbonIcon();
         new Notice(`CantRead ${this.settings.enabled ? 'enabled ✦' : 'disabled'}`);
         this.refreshActiveLeaf();
       },
@@ -161,12 +172,21 @@ export default class CantReadPlugin extends Plugin {
 
   onunload() { console.log('CantRead unloaded'); }
 
+  updateRibbonIcon() {
+    if (!this.ribbonIcon) return;
+    this.ribbonIcon.style.opacity = this.settings.enabled ? '1' : '0.4';
+    this.ribbonIcon.setAttribute(
+      'aria-label',
+      `CantRead: ${this.settings.enabled ? 'ON' : 'OFF'}`
+    );
+  }
+
   refreshActiveLeaf() {
     try {
-      // @ts-ignore
-      this.app.workspace.getLeavesOfType('markdown').forEach((leaf: any) => {
-        leaf.view?.previewMode?.rerender(true);
-      });
+      const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+      if (view) {
+        view.previewMode.rerender(true);
+      }
     } catch (_) {}
   }
 
