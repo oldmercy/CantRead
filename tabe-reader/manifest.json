@@ -1,0 +1,11 @@
+{
+  "id": "tabe-reader",
+  "name": "TABE Reader",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Automatically apply TABE-style visual formatting in Reading View. For brains that bounce off walls of text.",
+  "author": "Ahui",
+  "authorUrl": "https://github.com/CantRead",
+  "fundingUrl": "",
+  "isDesktopOnly": false
+}
