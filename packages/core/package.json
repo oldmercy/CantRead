@@ -1,0 +1,26 @@
+{
+  "name": "@cantread/core",
+  "version": "0.0.0",
+  "description": "TABE NLP 引擎（纯函数，零框架依赖）—— 名词加粗/动词高亮/形容词斜体/数字橙色的 POS→视觉映射",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "compromise": "^14.10.0"
+  },
+  "license": "MIT"
+}

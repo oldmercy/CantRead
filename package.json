@@ -1,0 +1,19 @@
+{
+  "name": "cantread",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CantRead monorepo — TABE 阅读辅助工具（Obsidian 插件 + 桌面 App，共享 tabe-nlp 引擎）",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --build",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "echo \"(lint 待接入 ESLint/Prettier — Week 1 后续)\" && exit 0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

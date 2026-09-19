@@ -2,6 +2,10 @@
 node_modules/
 npm-debug.log*
 
+# Monorepo build artifacts (packages/*/dist 由 tsc 生成，不入库)
+packages/*/dist/
+*.tsbuildinfo
+
 # Build artifacts (keep main.js for Obsidian — it IS the plugin)
 # tabe-reader/main.js is intentionally committed (users install it directly)
 
@@ -15,3 +19,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Personal session-management files (Claude Code workflow, not project code)
+A-Dashboard/
+
+# Personal Claude Code config & session handoff (not for public repo)
+.claude/
+HANDOFF.md

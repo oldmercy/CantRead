@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "CantRead — TABE 阅读高亮",
+  "version": "0.1.0",
+  "description": "把网页/邮件正文做 TABE 高亮：名词加粗·动词黄高亮·形容词绿斜体·数字橙色。点图标开关，或只高亮选中的一段。本地运行，不发送数据。",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "permissions": ["activeTab", "scripting", "contextMenus", "storage"],
+  "background": {
+    "scripts": ["dist/background.js"]
+  },
+  "action": {
+    "default_title": "CantRead：开关 TABE 高亮",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"],
+      "css": ["tabe.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "cantread@oldmercy.github.io",
+      "strict_min_version": "115.0"
+    }
+  }
+}

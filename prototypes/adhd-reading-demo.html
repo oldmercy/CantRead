@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CantRead · ADHD 阅读机制原型（带读 / 骨架 / Focus）</title>
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --text: #2d2d2d;
+    --dim: 0.22;
+    --key-dot: #c0392b;
+    --speak-bg: #cde3f8; /* 带读高亮用蓝色，避免和 TABE 动词的黄色撞车 */
+    --chrome: #e8e0d5;
+    --accent: #5b9bd5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Atkinson Hyperlegible", "Helvetica Neue", "PingFang SC", sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--chrome);
+    padding: 10px 16px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  header .title { font-weight: 700; margin-right: 8px; white-space: nowrap; }
+  .seg { display: flex; border: 1px solid #b9ad9c; border-radius: 8px; overflow: hidden; }
+  .seg button {
+    border: none; background: transparent; padding: 7px 14px; cursor: pointer;
+    font-size: 14px; color: var(--text);
+  }
+  .seg button.active { background: var(--text); color: #fff; }
+  .ctl { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  button.play {
+    border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+  }
+  button.ghost {
+    border: 1px solid #b9ad9c; border-radius: 8px; padding: 7px 12px;
+    background: transparent; cursor: pointer; font-size: 13px; color: var(--text);
+  }
+  select, input[type=range] { max-width: 180px; }
+  main { max-width: 720px; margin: 0 auto; padding: 28px 20px 120px; }
+  #reader {
+    font-size: 18px;
+    line-height: 1.9;
+    word-spacing: 0.14em;
+    letter-spacing: 0.01em;
+  }
+  #reader p { margin: 0 0 1.4em; }
+  .s { cursor: pointer; border-radius: 4px; transition: opacity .18s ease, background .18s ease; padding: 1px 0; }
+  .s:hover { background: rgba(91,155,213,.12); }
+
+  /* 带读高亮：TTS 读到哪句，哪句亮 */
+  .s.speaking { background: var(--speak-bg); box-shadow: 0 0 0 3px var(--speak-bg); }
+
+  /* 骨架模式（Dalio 双层）：重要句加粗+红点，其余变淡但仍可读 */
+  body.mode-skeleton .s.key { font-weight: 700; }
+  body.mode-skeleton .s.key::before { content: "●"; color: var(--key-dot); font-size: 0.65em; margin-right: 5px; vertical-align: 2px; }
+  body.mode-skeleton .s:not(.key) { opacity: 0.3; }
+  body.mode-skeleton .s.speaking { opacity: 1; }
+
+  /* Focus 模式：只有当前句正常，其余变淡 */
+  body.mode-focus .s { opacity: var(--dim); }
+  body.mode-focus .s.current { opacity: 1; background: rgba(255,255,255,.65); box-shadow: 0 0 0 3px rgba(255,255,255,.65); }
+  body.mode-focus .s.current.speaking { background: var(--speak-bg); box-shadow: 0 0 0 3px var(--speak-bg); }
+
+  /* ── TABE 层（与 tabe-reader/styles.css 一致） ── */
+  .tabe-bold { font-weight: 700; letter-spacing: 0.01em; }
+  .tabe-highlight { background-color: #ffe066; font-weight: 600; border-radius: 2px; padding: 0 2px; }
+  .tabe-italic { color: #4caf50; font-style: italic; }
+  .tabe-number { color: #e06c00; font-weight: 600; font-variant-numeric: tabular-nums; }
+  button.ghost.on { background: var(--text); color: #fff; border-color: var(--text); }
+
+  .hint {
+    background: #fffef9; border: 1px solid #e0d8c8; border-radius: 10px;
+    padding: 12px 16px; font-size: 13.5px; line-height: 1.7; margin-bottom: 26px; color: #555;
+  }
+  .hint b { color: var(--text); }
+  #status {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--chrome); padding: 8px 16px; font-size: 13px;
+    display: flex; justify-content: space-between; gap: 12px;
+    box-shadow: 0 -1px 4px rgba(0,0,0,.08);
+  }
+  details { margin-bottom: 26px; }
+  summary { cursor: pointer; font-size: 14px; color: #666; }
+  textarea {
+    width: 100%; height: 140px; margin-top: 8px; padding: 10px;
+    font-size: 14px; border: 1px solid #b9ad9c; border-radius: 8px; background: #fffef9;
+  }
+</style>
+</head>
+<body class="mode-full">
+
+<header>
+  <span class="title">CantRead 原型</span>
+  <div class="seg" id="modeSeg">
+    <button data-mode="full" class="active">全文</button>
+    <button data-mode="skeleton">骨架 Skim</button>
+    <button data-mode="focus">Focus 逐句</button>
+  </div>
+  <button class="ghost" id="btnTabe">TABE 层</button>
+  <button class="play" id="btnPlay">▶ 带读</button>
+  <button class="ghost" id="btnStop">■ 停止</button>
+  <span class="ctl">语速 <input type="range" id="rate" min="0.6" max="1.8" step="0.1" value="1.0"> <span id="rateVal">1.0×</span></span>
+  <span class="ctl">音量 <input type="range" id="vol" min="0" max="1" step="0.05" value="1"> <span id="volVal">100%</span></span>
+  <span class="ctl">声音 <select id="voiceSel"></select></span>
+</header>
+
+<main>
+  <div class="hint">
+    <b>玩法：</b>点任意句子设为当前句 · <b>TABE 层</b>开关词性视觉标记（名词粗体/动词黄底/形容词绿斜体/数字橙色，可与任何模式叠加）·
+    <b>▶ 带读</b>从当前句开始朗读（当前句蓝色高亮跟随 + 自动滚动）·
+    <b>音量拉到 0 = 静音带读</b>（不出声，高亮照样按语速推进，当纯视觉节拍器用）·
+    <b>骨架模式</b>自动把重要句加粗+红点（Dalio 式，只扫骨架也能懂）·
+    <b>Focus 模式</b>只亮当前句，<b>← →</b> 方向键逐句推进，空格键播放/暂停 ·
+    读到哪句会自动存进 localStorage，关掉重开<b>回到原位</b>（治走神找不回位置）。
+  </div>
+
+  <details>
+    <summary>换成你自己的文本（粘贴论文段落，英文；换行分段）</summary>
+    <textarea id="customText"></textarea>
+    <button class="ghost" id="btnApply" style="margin-top:8px">应用文本</button>
+  </details>
+
+  <div id="reader"></div>
+</main>
+
+<div id="status">
+  <span id="posInfo">—</span>
+  <span id="keyInfo">—</span>
+</div>
+
+<script src="../docs/compromise.js"></script>
+<script>
+// ---------- TABE 层：复用 docs/index.html 的 tokenizer（compromise.js 英文 POS） ----------
+const TABE_LAYERS = { nouns: true, verbs: true, adjs: true, numbers: true };
+let tabeOn = false;
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function tokenizeEn(text, layers) {
+  if (typeof nlp === 'undefined') return [{ text, cls: null }];
+  const tokens = [];
+  try {
+    const sentences = nlp(text).json({ tags: true });
+    for (const sent of sentences) {
+      for (const term of (sent.terms || [])) {
+        const tags = Array.isArray(term.tags) ? term.tags : [];
+        const has = (...names) => names.some(n => tags.includes(n));
+        let cls = null;
+        if (layers.numbers && has('Value','Date','NumericValue','Cardinal','Ordinal')) cls = 'tabe-number';
+        else if (layers.nouns && has('ProperNoun','Noun')) cls = 'tabe-bold';
+        else if (layers.verbs && has('Verb')) cls = 'tabe-highlight';
+        else if (layers.adjs && has('Adjective','Adverb')) cls = 'tabe-italic';
+        if (term.pre) tokens.push({ text: term.pre, cls: null });
+        tokens.push({ text: term.text || '', cls: (cls && (term.text||'').trim()) ? cls : null });
+        if (term.post) tokens.push({ text: term.post, cls: null });
+      }
+    }
+  } catch (e) { return [{ text, cls: null }]; }
+  return tokens;
+}
+function tabeHtml(text) {
+  return tokenizeEn(text, TABE_LAYERS).map(t =>
+    (t.cls && t.text.trim()) ? `<span class="${t.cls}">${escapeHtml(t.text)}</span>` : escapeHtml(t.text)
+  ).join('');
+}
+function applyTabeToAll() {
+  for (const s of sents) {
+    s.el.innerHTML = tabeOn ? tabeHtml(s.text) + ' ' : escapeHtml(s.text) + ' ';
+  }
+}
+
+// ---------- 示例文本（自写的学术风格段落，含典型 cue phrases） ----------
+const SAMPLE = `Estimating heterogeneous treatment effects has become a central task in applied economics, epidemiology, and the social sciences. Traditional regression approaches impose strong functional form assumptions, and these assumptions are rarely justified by theory. Machine learning methods promise greater flexibility, but naive applications produce biased estimates because regularization distorts the treatment coefficient. Double machine learning addresses this problem by combining orthogonalized moment conditions with sample splitting.
+
+In this paper, we propose a framework that integrates causal forests with double machine learning to recover conditional average treatment effects under unconfoundedness. The method proceeds in two stages. First, nuisance functions for the outcome and the propensity score are estimated with cross-fitted gradient boosting. Second, the residualized outcomes are used to grow an honest forest, where each tree is trained on one half of the sample and effects are estimated on the other half. This separation guarantees that the resulting confidence intervals have asymptotically valid coverage.
+
+We find that the proposed estimator reduces mean squared error by 34 percent relative to a standard causal forest in simulations with strong confounding. Our results also show that coverage of the 95 percent confidence intervals remains close to the nominal level even when the number of covariates grows to 500. However, the gains shrink substantially when treatment effects are approximately homogeneous, and in that regime a simple partially linear model performs almost as well. These findings suggest that practitioners should test for effect heterogeneity before committing to flexible estimators.
+
+An important limitation of our approach is that it relies on the unconfoundedness assumption, which cannot be verified from observational data alone. Future work should extend the framework to settings with instrumental variables and panel structure. In conclusion, the combination of orthogonalization, sample splitting, and honest estimation offers a practical and statistically grounded path to credible heterogeneous effect estimation.`;
+
+// ---------- Key sentence 检测（规则版：cue phrases + 段首 + 数字） ----------
+const CUES = [
+  /\bwe (find|found|show(ed)?|demonstrate|observe[d]?|propose|argue|document)\b/i,
+  /\bour (results?|findings?|estimates?|analysis|approach)\b/i,
+  /\bthese (results?|findings?|data) (suggest|indicate|imply|show)\b/i,
+  /\b(in conclusion|in sum|overall|taken together)\b/i,
+  /\b(however|in contrast|surprisingly|importantly|notably)\b/i,
+  /\b(significant(ly)?|limitation|caveat)\b/i,
+  /\bin this paper\b/i,
+];
+function scoreSentence(text, isFirstInPara) {
+  let s = 0;
+  if (CUES.some(r => r.test(text))) s += 0.5;
+  if (isFirstInPara) s += 0.3;
+  if (/\d+ percent|\bp\s*[<>]|\b\d{2,}\b/.test(text)) s += 0.1;
+  return s;
+}
+
+// ---------- 渲染 ----------
+let sents = [];          // { text, el }
+let current = 0;
+let playing = false;
+
+function textKey(t) { let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) | 0; return 'cantread-pos-' + h; }
+let storeKey = '';
+
+function render(raw) {
+  speechSynthesis.cancel(); playing = false; updatePlayBtn();
+  const reader = document.getElementById('reader');
+  reader.innerHTML = '';
+  sents = [];
+  storeKey = textKey(raw);
+  const paras = raw.split(/\n\s*\n|\n/).map(p => p.trim()).filter(Boolean);
+  let keyCount = 0;
+  for (const para of paras) {
+    const p = document.createElement('p');
+    const pieces = para.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [para];
+    pieces.forEach((t, j) => {
+      const text = t.trim();
+      if (!text) return;
+      const span = document.createElement('span');
+      span.className = 's';
+      span.textContent = text + ' ';
+      const idx = sents.length;
+      if (scoreSentence(text, j === 0) >= 0.5) { span.classList.add('key'); keyCount++; }
+      span.onclick = () => { setCurrent(idx); if (playing) speakFrom(idx); savePos(); };
+      p.appendChild(span);
+      sents.push({ text, el: span });
+    });
+    reader.appendChild(p);
+  }
+  if (tabeOn) applyTabeToAll();
+  document.getElementById('keyInfo').textContent =
+    `骨架：${keyCount}/${sents.length} 句被标为重要（规则版，正式版会更准 + 可手动改）`;
+  // 恢复上次位置
+  const saved = parseInt(localStorage.getItem(storeKey) || '0', 10);
+  setCurrent(isNaN(saved) ? 0 : Math.min(saved, sents.length - 1));
+}
+
+function setCurrent(i) {
+  if (!sents.length) return;
+  current = Math.max(0, Math.min(i, sents.length - 1));
+  sents.forEach((s, j) => s.el.classList.toggle('current', j === current));
+  sents[current].el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  document.getElementById('posInfo').textContent =
+    `第 ${current + 1} / ${sents.length} 句（位置已记住，重开页面会回到这里）`;
+}
+function savePos() { localStorage.setItem(storeKey, String(current)); }
+
+// ---------- TTS 带读：按句朗读，onstart 驱动高亮 ----------
+function clearSpeaking() { sents.forEach(s => s.el.classList.remove('speaking')); }
+
+function speakFrom(i) {
+  speechSynthesis.cancel();
+  setCurrent(i);
+  playing = true; updatePlayBtn();
+  const step = () => {
+    if (!playing || current >= sents.length) { playing = false; clearSpeaking(); updatePlayBtn(); return; }
+    const u = new SpeechSynthesisUtterance(sents[current].text);
+    u.rate = parseFloat(document.getElementById('rate').value);
+    u.volume = parseFloat(document.getElementById('vol').value); // 0 = 静音带读：高亮照走，不出声
+    const v = voices[document.getElementById('voiceSel').value];
+    if (v) u.voice = v;
+    u.onstart = () => { clearSpeaking(); sents[current].el.classList.add('speaking'); setCurrent(current); };
+    u.onend = () => { savePos(); if (playing) { current++; step(); } };
+    u.onerror = () => { playing = false; clearSpeaking(); updatePlayBtn(); };
+    speechSynthesis.speak(u);
+  };
+  step();
+}
+function stopSpeak() { playing = false; speechSynthesis.cancel(); clearSpeaking(); updatePlayBtn(); }
+function updatePlayBtn() { document.getElementById('btnPlay').textContent = playing ? '⏸ 暂停' : '▶ 带读'; }
+
+// ---------- 声音列表 ----------
+let voices = [];
+function loadVoices() {
+  voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  const sel = document.getElementById('voiceSel');
+  sel.innerHTML = '';
+  voices.forEach((v, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `${v.name} (${v.lang})`;
+    if (/Samantha|Daniel|Ava|Karen/.test(v.name)) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// ---------- 控件 ----------
+document.getElementById('btnPlay').onclick = () => {
+  if (playing) { playing = false; speechSynthesis.cancel(); clearSpeaking(); updatePlayBtn(); }
+  else speakFrom(current);
+};
+document.getElementById('btnStop').onclick = stopSpeak;
+document.getElementById('btnTabe').onclick = () => {
+  tabeOn = !tabeOn;
+  document.getElementById('btnTabe').classList.toggle('on', tabeOn);
+  if (tabeOn && typeof nlp === 'undefined') {
+    alert('compromise.js 没加载到（../docs/compromise.js）。请从 repo 根目录打开本文件，或起本地服务器。');
+    tabeOn = false;
+    document.getElementById('btnTabe').classList.remove('on');
+    return;
+  }
+  applyTabeToAll();
+};
+document.getElementById('rate').oninput = e => {
+  document.getElementById('rateVal').textContent = parseFloat(e.target.value).toFixed(1) + '×';
+  if (playing) speakFrom(current); // 变速即时生效
+};
+document.getElementById('vol').oninput = e => {
+  const v = parseFloat(e.target.value);
+  document.getElementById('volVal').textContent = v === 0 ? '静音带读' : Math.round(v * 100) + '%';
+  if (playing) speakFrom(current); // 变音量即时生效
+};
+document.querySelectorAll('#modeSeg button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('#modeSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.body.className = 'mode-' + b.dataset.mode;
+    if (b.dataset.mode === 'focus') setCurrent(current);
+  };
+});
+document.getElementById('btnApply').onclick = () => {
+  const t = document.getElementById('customText').value.trim();
+  if (t) render(t);
+};
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); setCurrent(current + 1); savePos(); if (playing) speakFrom(current); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); setCurrent(current - 1); savePos(); if (playing) speakFrom(current); }
+  if (e.key === ' ')          { e.preventDefault(); document.getElementById('btnPlay').click(); }
+});
+
+render(SAMPLE);
+</script>
+</body>
+</html>

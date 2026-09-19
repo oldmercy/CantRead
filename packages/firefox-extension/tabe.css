@@ -1,0 +1,47 @@
+/* CantRead — TABE 高亮样式（独立版，从 Obsidian 插件 styles.css 剥离）
+   .tabe-bold  名词 → 加粗
+   .tabe-highlight 动词 → 黄底
+   .tabe-italic 形容词/副词 → 绿斜体
+   .tabe-number 数字/日期 → 橙色
+   cr-tabe 是包裹元素，必须 inline 以免破坏原页面布局。 */
+
+cr-tabe {
+  display: inline;
+}
+
+.tabe-bold {
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+}
+
+.tabe-highlight {
+  background-color: #ffe066 !important;
+  color: #1a1a1a !important;
+  font-weight: 600 !important;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.tabe-italic {
+  color: #2e7d32 !important;
+  font-style: italic !important;
+}
+
+.tabe-number {
+  color: #e06c00 !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tabe-highlight {
+    background-color: #7a6300 !important;
+    color: #fff8d6 !important;
+  }
+  .tabe-italic {
+    color: #6fcf73 !important;
+  }
+  .tabe-number {
+    color: #ffab5e !important;
+  }
+}
