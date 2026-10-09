@@ -11,7 +11,8 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "echo \"(lint 待接入 ESLint/Prettier — Week 1 后续)\" && exit 0",
     "build": "npm run build -w @cantread/core && npm run build -w @cantread/firefox-extension",
-    "package:firefox": "npm run build -w @cantread/core && npm run package -w @cantread/firefox-extension"
+    "package:firefox": "npm run build -w @cantread/core && npm run package -w @cantread/firefox-extension",
+    "readme": "npm run build -w @cantread/core && node scripts/build-readme.mjs"
   },
   "license": "MIT",
   "devDependencies": {

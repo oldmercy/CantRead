@@ -1,67 +1,67 @@
-# CantRead 路线图 *Roadmap*
+<!-- 自动生成，请勿直接修改。源文件：scripts/readme-src/ROADMAP.md，运行 npm run readme 重新生成。 -->
+<!-- Generated file — edit scripts/readme-src/ROADMAP.md and run "npm run readme". -->
 
-> **北极星 North star**：不是让人读得更快，而是**降低「敢点开」的门槛**。
-> 订了却不敢点开的报纸、一打开就想关掉的长邮件、读不进去的论文——先让人愿意开始读。
->
-> *Not about reading faster — about lowering the barrier to opening the thing at all.*
+# CantRead Roadmap
 
-**方向 Direction**：**插件优先**。大部分人读的东西都在浏览器里，插件不需要导入任何东西，摩擦最低。独立 App 不是取消了，而是先看插件能覆盖多少，再决定还需不需要。
+**English** | [简体中文](ROADMAP.zh-CN.md)
 
-*Browser-first: most reading happens in the browser, and an extension needs no importing. A standalone app is on hold until we see how far the extension can go.*
+> **North star:** this <mark>is</mark> not about **reading** *faster*. **It** <mark>is</mark> about **lowering the barrier to opening the thing at all** — the **newsletter you** <mark>subscribed</mark> to but never <mark>open</mark>, the *long* **email you** <mark>want</mark> to <mark>close</mark> *right away*, the **paper** that <mark>will</mark> not <mark>go in</mark>. First, <mark>make</mark> **people** <mark>willing</mark> to <mark>start reading</mark>.
 
-图例：✅ 已完成 · 🚧 进行中 · 📋 计划中 · 💭 想法，还没定
+**Direction:** **browser** first. *Most* **reading** <mark>happens</mark> in the **browser**, and an **extension** <mark>asks</mark> **you** to <mark>import</mark> **nothing**, so **it** <mark>has</mark> the least **friction**. The **standalone app** <mark>is</mark> not <mark>cancelled</mark>; **it** <mark>is</mark> on **hold** until **we** <mark>see</mark> how much the **extension** <mark>can cover</mark>.
 
----
-
-## ✅ 已完成 *Shipped*
-
-- **Obsidian 插件 v0.1.1** —— Reading View 自动 TABE 格式化（[`tabe-reader/`](tabe-reader/)）
-- **网页 demo** —— <https://oldmercy.github.io/CantRead/>
-- **共享引擎 `@cantread/core`** —— 所有产品共用同一份 TABE 引擎（[`packages/core/`](packages/core/)）
-- **Firefox 插件 v1.0** —— 整页 / 选区高亮、设置面板（单独开关每一层）、快捷键、中英双语界面、按需加载、不收集数据（[`packages/firefox-extension/`](packages/firefox-extension/)）
-
-## 🚧 进行中 *In progress*
-
-- **上架 Firefox 插件商店（AMO）** —— 审核通过后，一键安装、自动更新
+Legend: ✅ <mark>shipped</mark> · 🚧 in **progress ·** 📋 *planned* · 💭 **idea**, not <mark>decided</mark>
 
 ---
 
-## 📋 v1.1 —— 让每天用起来更顺 *Everyday polish*
+## ✅ Shipped
 
-- **指定网站自动开启** —— 在你信任的网站（订阅的报纸、学校邮箱）打开就自动高亮，不用每次点。默认关闭，由你自己加网站
-- **Android 手机** —— Android 版 Firefox 支持插件；适配手机屏幕和触控
-- **Gmail / 邮箱优化** —— 邮件页面结构乱，针对性调整
-- **动态加载的内容** —— 无限滚动、点「展开」后出现的新文字也自动高亮
-- **更轻的加载方式** —— 现在插件在每个网页里预先待命（引擎约 450KB）；研究改成只在点击时才加载，让网页更快、安装时不再提示「访问网站内容」
-- **更准的中文** —— 改进中文分词（现在会把「多伦多大学」这类专有名词切错）
+- **Obsidian plugin v0.1.1** — **formats Reading View** *automatically* ([`tabe-reader/`](tabe-reader/))
+- **Web demo** — <https://oldmercy.github.io/CantRead/>
+- **Shared engine `@cantread/core`** — every **product** <mark>uses</mark> the *same* **TABE engine** ([`packages/core/`](packages/core/))
+- **Firefox extension v1.0** — *whole*-**page** and **selection** <mark>highlighting</mark>, a **settings panel** with a **switch** for each **layer**, a **keyboard shortcut**, an **English** and **Chinese interface**, and no **data collection** ([`packages/firefox-extension/`](packages/firefox-extension/))
 
-## 📋 v1.2 —— 更多浏览器 *More browsers*
+## 🚧 In progress
 
-- **Chrome / Edge 版本** —— 用的是同一套插件标准，改配置即可，上架 Chrome 应用商店
-- 💭 **Safari / iPhone** —— 需要用 Xcode 打包成 App 上架 App Store，成本高，看需求再定
-
-## 📋 v2 —— ADHD 阅读辅助，搬进插件 *Reading aids*
-
-这些原本规划给桌面 App，在 [ADHD 原型](prototypes/adhd-reading-demo.html) 里验证过，全部做成**可以叠加的开关**：
-
-- **带读模式** —— 逐句朗读，当前句高亮跟着走，自动滚动；音量可以拉到 0，变成无声的视觉节拍器。先用系统自带的声音（Web Speech API），不需要 AI 模型
-- **逐句 Focus** —— 当前这句正常显示，前后文变淡，用方向键往下走
-- **位置记忆** —— 关掉页面再打开，回到上次读到的那一句（治「走神后找不回位置」）
-- **骨架 Skim** —— 自动标出重要的句子，可以在全文和骨架之间一键切换
-
-## 📋 v3 —— 读论文 *Papers*
-
-- **插件内的 PDF 阅读页** —— 在插件里打开 PDF，同样加 TABE 高亮。Firefox 自带的 PDF 阅读器不允许插件修改，所以要自带一个（用 pdf.js）
-- **术语提取 + 悬停解释**、**章节识别和跳转**、**导出到 Obsidian**
-
-## 💭 更远的想法 *Later / exploring*
-
-- **全局划词悬浮窗（macOS）** —— 在任何 App 里选中文字 → 按快捷键 → 弹出带 TABE 高亮的窗口。（直接改「系统字体」做不到：字体只认字母形状，不知道一个词是名词还是动词）
-- **长难句拆解** —— 用 AI 把绕的长句拆成几句短的
-- **AI 模式（Route C）搬进插件** —— 用户自带 API key 或本地模型（Ollama），语义更准
-- **更自然的朗读声音** —— 本地小模型 TTS
-- **独立桌面 App** —— 视插件能覆盖多少再决定
+- **Listing on the Firefox Add-ons store (AMO)** — one-**click** <mark>install</mark> and *automatic* **updates** *once* **it** <mark>is approved</mark>
 
 ---
 
-有想法或者需求？欢迎 [提 Issue](https://github.com/oldmercy/CantRead/issues)。*Ideas and requests welcome.*
+## 📋 v1.1 — smoother everyday use
+
+- **Auto-highlight on chosen sites** — **pages you** <mark>trust</mark>, *like* **your newsletters** or **school email**, <mark>are highlighted</mark> as soon as **they** <mark>open</mark>. Off by **default**; **you** <mark>add</mark> the **sites yourself**
+- **Android** — **Firefox** for **Android** <mark>supports</mark> **extensions**; <mark>adapt</mark> the **panel** for *small* **screens** and <mark>touch</mark>
+- **Gmail and webmail tuning** — **email pages** <mark>have</mark> *messy* **structure** and <mark>need</mark> *specific* **handling**
+- **Dynamic content** — <mark>text</mark> that <mark>appears</mark> *later*, from *infinite* **scroll** or an "**expand**" **button**, <mark>gets highlighted</mark> *too*
+- **Lighter loading** — the **extension** *currently* <mark>waits on</mark> every **page** with the **engine** (about 450 **KB**) *already* <mark>loaded</mark>; <mark>load</mark> **it** *only* when **you** <mark>click</mark>, so **pages** <mark>stay</mark> *fast* and the **install** <mark>prompt</mark> *no longer* <mark>asks</mark> for **access** to *all* **sites**
+- **Better Chinese** — <mark>improve</mark> **Chinese word segmentation**, which *currently* <mark>splits</mark> *proper* **nouns** <mark>like</mark> *多*伦*多大*<mark>学</mark> *incorrectly*
+
+## 📋 v1.2 — more browsers
+
+- **Chrome / Edge** — **they** <mark>use</mark> the *same* **extension standard**, so this *mostly* <mark>needs</mark> **configuration** <mark>changes</mark> and a **Chrome Web Store listing**
+- 💭 **Safari / iPhone** — <mark>requires packaging</mark> as an **app** with **Xcode** for the **App Store**; *costly*, so **it** <mark>depends</mark> on **demand**
+
+## 📋 v2 — ADHD reading aids, in the extension
+
+These <mark>were planned</mark> for the **desktop app** and <mark>tested</mark> in the [ADHD prototype](prototypes/adhd-reading-demo.html). Each one <mark>will be</mark> a **switch you** <mark>can combine</mark> with the **others**:
+
+- **Read-along** — <mark>reads</mark> **sentence** by <mark>sentence</mark> while the *current* **sentence stays** <mark>highlighted</mark> and the **page scrolls**. The **volume** <mark>goes</mark> down to 0, which <mark>turns</mark> **it** into a *silent visual* **metronome**. **It** <mark>starts</mark> with the **system voice** (**Web Speech API**), so no **AI model** <mark>is</mark> *needed*
+- **Sentence focus** — the *current* **sentence** <mark>stays clear</mark>, the **text** around **it** <mark>fades</mark>, and the **arrow** <mark>keys move</mark> **you** <mark>forward</mark>
+- **Position memory** — <mark>close</mark> the **page**, <mark>open</mark> **it** *again*, and **you** <mark>are</mark> **back** at the **sentence** where **you** <mark>stopped</mark>. This <mark>is</mark> for "**I** <mark>drifted</mark> off and <mark>lost</mark> **my place**"
+- **Skim skeleton** — *important* **sentences** <mark>are marked</mark> *automatically*, and one **switch** <mark>flips</mark> between the *full* **text** and the **skeleton**
+
+## 📋 v3 — reading papers
+
+- **A PDF reader inside the extension** — <mark>open</mark> a **PDF** in the **extension** and <mark>get</mark> the *same* **highlighting**. **Firefox's** <mark>built</mark>-in **PDF viewer** <mark>does</mark> not <mark>allow</mark> **extensions** to <mark>change</mark> **it**, so the **extension** <mark>needs</mark> **its** *own* **viewer** (<mark>based</mark> on **pdf.js**)
+- **Term extraction with hover definitions**, **section detection and jumping**, and **export to Obsidian**
+
+## 💭 Later / exploring
+
+- **System-wide popup (macOS)** — *select* **text** in any **app**, <mark>press</mark> a **shortcut**, and a **window** <mark>shows</mark> **it** with **TABE** <mark>highlighting</mark>. A **system font** <mark>cannot</mark> <mark>do</mark> this: **fonts** *only* <mark>know</mark> **letter shapes**, not whether a **word** <mark>is</mark> a **noun** or a **verb**
+- **Long-sentence splitting** — <mark>use</mark> **AI** to <mark>break tangled</mark> *long* **sentences** into a few *short* **ones**
+- **AI mode (Route C) in the extension** — <mark>bring</mark> **your** *own* **API key** or a *local* **model** (**Ollama**) for *more accurate* **meaning**
+- **More natural read-along voices** — a *small local* **text**-to-**speech model**
+- **Standalone desktop app** — <mark>decided</mark> *once* **we** <mark>know</mark> how much the **extension** <mark>covers</mark>
+
+---
+
+**Ideas** or <mark>requests</mark>? [Open an issue](https://github.com/oldmercy/CantRead/issues).

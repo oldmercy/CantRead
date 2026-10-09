@@ -1,107 +1,108 @@
-# CantRead — 浏览器插件 *Browser extension*
+<!-- 自动生成，请勿直接修改。源文件：scripts/readme-src/firefox-extension.README.md，运行 npm run readme 重新生成。 -->
+<!-- Generated file — edit scripts/readme-src/firefox-extension.README.md and run "npm run readme". -->
 
-把网页和邮件里密密麻麻的文字变得**能扫读**：
+# CantRead — Browser extension
 
-**名词加粗** · <mark>动词黄色高亮</mark> · *形容词绿色斜体* · 数字橙色
+**English** | [简体中文](README.zh-CN.md)
 
-*Makes walls of text scannable: nouns bold, verbs highlighted, adjectives green italic, numbers orange.*
+**CantRead** <mark>makes</mark> *dense* **web pages** and **emails** *scannable*: **nouns bold**, <mark>verbs highlighted</mark>, *adjectives green italic*, and **numbers** *orange*.
 
 ![Before / After](store/before-after-light.png)
 
-- 🔒 **全部在本机运行**，不联网、不收集、不上传任何数据 · *Runs entirely on your device. No data collected.*
-- 🧩 只改文字的样式，链接、图片、页面布局都不动，随时可以还原原文
-- 🌏 中英文都支持（英文更准确，中文分词还在改进）
+- 🔒 **Runs entirely on your device.** **It** <mark>makes</mark> no **network** <mark>requests</mark> and <mark>collects</mark> no **data**.
+- 🧩 **Only** the **text** <mark>styling</mark> **changes**. <mark>Links</mark>, **images** and the **page layout** <mark>stay</mark> the *same*, and **you** <mark>can switch back</mark> to the *original* at any **time**.
+- 🌏 **Works** with **English** and **Chinese**. *English* <mark>is</mark> *more accurate*; **Chinese word segmentation** <mark>is</mark> *still* <mark>improving</mark>.
 
-当前版本 **v1.0.0** · 支持 Firefox 128+（桌面版）。Chrome / Edge 版本在 [路线图](../../ROADMAP.md) 里。
+*Current* **version** **v1.0.0** for **Firefox** 128+ on **desktop**. **Chrome** and **Edge** <mark>are</mark> on the [roadmap](../../ROADMAP.md).
 
 ---
 
-## 安装 *Install*
+## Install
 
-### 方式一：Firefox 插件商店（推荐） *From the Firefox Add-ons store*
+### Option 1: Firefox Add-ons store (recommended)
 
-> 🕐 **正在审核中**。审核通过后，这里会放商店链接，点「添加到 Firefox」就装好了，以后也会自动更新。
->
-> *Under review on addons.mozilla.org — the store link will be added here once approved.*
+> 🕐 **Currently under review.** Once it is approved, the store link goes here: click "Add to Firefox" and you are done, with automatic updates from then on.
 
-### 方式二：从源码临时加载（开发者 / 等不及审核） *Load from source (temporary)*
+### Option 2: load from source (temporary)
 
-> ⚠️ 这种方式**重启 Firefox 后插件会消失**，要重新加载一次。适合开发者或想抢先试用的人。
+> ⚠️ With this method **the extension disappears when Firefox restarts**, so you have to load it again. It suits developers and anyone who cannot wait for the review.
 
-1. 安装 [Node.js](https://nodejs.org)（18 或以上）
-2. 下载代码并构建：
+1. <mark>Install</mark> [Node.js](https://nodejs.org) (**version** 18 or *newer*)
+2. <mark>Download</mark> the **code** and <mark>build</mark> **it**:
    ```bash
    git clone https://github.com/oldmercy/CantRead.git
    cd CantRead
    npm install
    npm run build
    ```
-3. Firefox 地址栏输入 `about:debugging#/runtime/this-firefox`，回车
-4. 点 **「临时载入附加组件…」**（*Load Temporary Add-on…*）
-5. 选择 `packages/firefox-extension/manifest.json`
-6. 工具栏出现 CantRead 图标，就装好了
+3. <mark>Type</mark> `about:debugging#/runtime/this-firefox` in the **Firefox address bar** and <mark>press</mark> **Enter**
+4. <mark>Click</mark> **Load Temporary Add-on…**
+5. <mark>Choose</mark> `packages/firefox-extension/manifest.json`
+6. The **CantRead icon** <mark>appears</mark> in the **toolbar** (or *under* the 🧩 **menu**) and **you** <mark>are</mark> *ready*
 
 ---
 
-## 怎么用 *How to use*
+## How to use
 
-| 操作 | 效果 |
-|------|------|
-| **点工具栏图标** | 当前页面立刻高亮，同时弹出设置面板。（如果是装插件之前就打开的页面，先刷新一下） |
-| 面板里点 **「还原原文」** | 去掉高亮，页面恢复原样 |
-| 面板里的 **开关** | 单独关掉某一层（比如觉得太密，只留名词和动词）。设置会被记住 |
-| 快捷键 **⌥⇧H**（Windows/Linux：**Alt+Shift+H**） | 直接开/关高亮，不打开面板 |
-| **选中一段文字 → 右键 → 「CantRead：高亮选中文字」** | 只高亮那一段 |
+| Action | Result |
+|---|---|
+| **Click the toolbar icon** | The current page is highlighted right away and the settings panel opens. Refresh pages that were open before you installed the extension |
+| **Show original** in the panel | Removes the highlighting and restores the page |
+| **Switches** in the panel | Turn off a single layer, for example keep only nouns and verbs on a busy page. Your choice is remembered |
+| `Alt+Shift+H` (`⌥⇧H` on Mac) | Toggles highlighting without opening the panel |
+| **Select text → right-click → "CantRead: highlight selected text"** | Highlights only that part |
 
-快捷键可以在 Firefox 的 `about:addons` → 齿轮 ⚙️ → **管理扩展快捷键** 里改。
+**You** <mark>can change</mark> the **shortcut** in **Firefox** *under* `about:addons` → ⚙️ → **Manage Extension Shortcuts**.
 
-**哪些页面用不了**：Firefox 的设置页、插件商店页面、Firefox 自带的 PDF 阅读器——这些页面浏览器不允许任何插件修改。
-
----
-
-## 隐私 *Privacy*
-
-CantRead **不收集任何数据**。分析文字用的是打包在插件里的 [compromise.js](https://github.com/spencermountain/compromise)（英文）和规则引擎（中文），全部在你的电脑上运行，不联网。唯一保存的东西是你的层开关设置，存在浏览器本地（`storage.local`）。
-
-插件会在每个网页里**待命**（所以安装时 Firefox 会提示它可以访问网站内容），但只有在你**主动点击图标 / 按快捷键 / 用右键菜单**时才会处理当前页面的文字。处理全部在本机完成，不读取、不保存、不上传网页内容。
+**Pages where it cannot work:** **Firefox settings pages**, the *add*-*ons* **store**, and **Firefox's** <mark>built</mark>-in **PDF viewer**. **Firefox** <mark>does</mark> not <mark>let</mark> any **extension change** these **pages**.
 
 ---
 
-## 开发 *Development*
+## Privacy
+
+**CantRead** **collects no data**. **Text** <mark>is analyzed</mark> by [compromise.js](https://github.com/spencermountain/compromise) (*English*) and a **rule engine** (**Chinese**), both <mark>bundled</mark> *inside* the **extension** and <mark>running</mark> on **your computer** without <mark>going</mark> *online*. The *only* **thing** <mark>saved is</mark> **your layer settings**, <mark>kept in</mark> **your browser's** *local* **storage** (`storage.local`).
+
+The **extension** <mark>waits on</mark> every **page**, which <mark>is</mark> why **Firefox** <mark>mentions</mark> **access** to **website content** when **you** <mark>install</mark> **it**. **It** *only* <mark>processes</mark> **text** when **you click the icon, press the shortcut, or use the right-click menu**. **Page content** <mark>is</mark> never <mark>read</mark> for **anything** else, <mark>stored</mark>, or <mark>sent</mark> *anywhere*.
+
+---
+
+## Development
 
 ```bash
-npm run build -w @cantread/core                 # 先构建共享的 TABE 引擎
-npm run watch -w @cantread/firefox-extension    # 改代码时自动重新构建
+npm run build -w @cantread/core                 # build the shared TABE engine first
+npm run watch -w @cantread/firefox-extension    # rebuild automatically while you edit
 npm run typecheck -w @cantread/firefox-extension
 ```
 
-改完代码后，在 `about:debugging` 页面点插件旁边的 **「重新载入」**（*Reload*）就能看到效果。
+After <mark>editing</mark>, <mark>click</mark> **Reload** *next* to the **extension** on the `about:debugging` **page** to <mark>see</mark> the **change**.
 
-### 打包上传商店 *Package for AMO*
+> ⚠️ Always build with esbuild through `npm run build`. A bundle made with a different tool once crashed in real Firefox even though it passed tests elsewhere.
+
+### Packaging for the store
 
 ```bash
-git commit ...              # 源码包取的是已提交的版本，先 commit
-npm run package:firefox     # 在 monorepo 根目录运行
+git commit ...              # the source archive uses the committed version, so commit first
+npm run package:firefox     # run from the monorepo root
 ```
 
-会在 `packages/firefox-extension/web-ext-artifacts/` 生成两个文件：
-- `cantread-firefox-<版本>.zip` —— 插件本体，上传到商店
-- `cantread-source-<版本>.zip` —— 源码包，商店审核要求一起上传
+This <mark>creates</mark> two **files** <mark>in</mark> `packages/firefox-extension/web-ext-artifacts/`:
+- `cantread-firefox-<version>.zip` — the **extension itself**, <mark>uploaded</mark> to the **store**
+- `cantread-source-<version>.zip` — the **source archive**, which the **store review** <mark>requires</mark>
 
-### 代码结构 *Structure*
+### Structure
 
-| 文件 | 作用 |
-|------|------|
-| `manifest.json` | 插件声明（Manifest V3，Firefox `gecko` 段，声明不收集数据） |
-| `src/content.ts` | 注入到网页里：遍历文字节点 → `tokenizeTABE()` → 高亮；还原；选区处理；层开关 |
-| `src/background.ts` | 快捷键、右键菜单 |
-| `src/popup.ts` + `popup/` | 点图标弹出的设置面板 |
-| `src/inject.ts` | 兜底注入（插件装好之前就打开的标签页） |
-| `src/settings.ts` | 层开关的读写（`storage.local`） |
-| `_locales/` | 中英文界面文字 |
-| `tabe.css` | TABE 配色，亮色/暗色模式自动适配 |
-| `build.mjs` / `package.mjs` | esbuild 打包 / 生成商店 zip |
-| `store/` | 商店截图 |
+| File | Purpose |
+|------|---------|
+| `manifest.json` | Extension manifest (Manifest V3, Firefox `gecko` settings, declares no data collection) |
+| `src/content.ts` | Runs in the page: walks text nodes → `tokenizeTABE()` → highlights; restore; selection; layer switches |
+| `src/background.ts` | Keyboard shortcut and right-click menu |
+| `src/popup.ts` + `popup/` | The settings panel that opens from the toolbar icon |
+| `src/inject.ts` | Fallback injection for tabs that were open before the extension loaded |
+| `src/settings.ts` | Reads and writes the layer switches (`storage.local`) |
+| `_locales/` | English and Chinese interface text |
+| `tabe.css` | TABE colors, adapting to light and dark mode |
+| `build.mjs` / `package.mjs` | esbuild bundling / store zip packaging |
+| `store/` | Store screenshots |
 
 ---
 
