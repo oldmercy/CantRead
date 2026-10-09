@@ -89,7 +89,7 @@ void initLayers();
 void initShortcut();
 void initPage();
 try {
-  $('version').textContent = `v${api.runtime.getManifest().version} · build 4`;
+  $('version').textContent = `v${api.runtime.getManifest().version}`;
 } catch {
   /* 版本号只是辅助信息，取不到也不影响使用 */
 }
