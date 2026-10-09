@@ -1,7 +1,8 @@
 /**
- * esbuild 打包：把 content.ts / background.ts + @cantread/core + compromise
+ * esbuild 打包：把 content / background / popup 三个入口 + @cantread/core + compromise
  * 各自捆成一个 IIFE 文件，输出到 dist/。浏览器插件不能直接 import node_modules，
  * 所以需要这一步胶水打包（用事实标准 esbuild，不自研）。
+ * 不压缩（minify: false）：方便 Firefox 商店审核员对照源码阅读。
  */
 import { build, context } from 'esbuild';
 
@@ -10,15 +11,16 @@ const watch = process.argv.includes('--watch');
 const common = {
   bundle: true,
   format: 'iife',
-  target: 'firefox115',
+  target: 'firefox128',
   platform: 'browser',
   logLevel: 'info',
 };
 
-const entries = [
-  { entryPoints: ['src/content.ts'], outfile: 'dist/content.js', ...common },
-  { entryPoints: ['src/background.ts'], outfile: 'dist/background.js', ...common },
-];
+const entries = ['content', 'background', 'popup'].map((name) => ({
+  entryPoints: [`src/${name}.ts`],
+  outfile: `dist/${name}.js`,
+  ...common,
+}));
 
 if (watch) {
   for (const cfg of entries) {

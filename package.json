@@ -2,14 +2,16 @@
   "name": "cantread",
   "version": "0.0.0",
   "private": true,
-  "description": "CantRead monorepo — TABE 阅读辅助工具（Obsidian 插件 + 桌面 App，共享 tabe-nlp 引擎）",
+  "description": "CantRead monorepo — TABE 阅读辅助工具（浏览器插件 + Obsidian 插件，共享 tabe-nlp 引擎）",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "typecheck": "tsc --build",
     "test": "npm run test --workspaces --if-present",
-    "lint": "echo \"(lint 待接入 ESLint/Prettier — Week 1 后续)\" && exit 0"
+    "lint": "echo \"(lint 待接入 ESLint/Prettier — Week 1 后续)\" && exit 0",
+    "build": "npm run build -w @cantread/core && npm run build -w @cantread/firefox-extension",
+    "package:firefox": "npm run build -w @cantread/core && npm run package -w @cantread/firefox-extension"
   },
   "license": "MIT",
   "devDependencies": {

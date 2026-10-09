@@ -1,20 +1,21 @@
 /* CantRead — TABE 高亮样式（独立版，从 Obsidian 插件 styles.css 剥离）
-   .tabe-bold  名词 → 加粗
+   .tabe-bold      名词 → 加粗
    .tabe-highlight 动词 → 黄底
-   .tabe-italic 形容词/副词 → 绿斜体
-   .tabe-number 数字/日期 → 橙色
-   cr-tabe 是包裹元素，必须 inline 以免破坏原页面布局。 */
+   .tabe-italic    形容词/副词 → 绿斜体
+   .tabe-number    数字/日期 → 橙色
+   所有规则都限定在 cr-tabe 包裹元素里，避免误伤网页自己恰好同名的 class。
+   cr-tabe 必须 inline，以免破坏原页面布局。 */
 
 cr-tabe {
   display: inline;
 }
 
-.tabe-bold {
+cr-tabe .tabe-bold {
   font-weight: 700 !important;
   letter-spacing: 0.01em;
 }
 
-.tabe-highlight {
+cr-tabe .tabe-highlight {
   background-color: #ffe066 !important;
   color: #1a1a1a !important;
   font-weight: 600 !important;
@@ -22,26 +23,47 @@ cr-tabe {
   padding: 0 2px;
 }
 
-.tabe-italic {
+cr-tabe .tabe-italic {
   color: #2e7d32 !important;
   font-style: italic !important;
 }
 
-.tabe-number {
+cr-tabe .tabe-number {
   color: #e06c00 !important;
   font-weight: 600 !important;
   font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-color-scheme: dark) {
-  .tabe-highlight {
+  cr-tabe .tabe-highlight {
     background-color: #7a6300 !important;
     color: #fff8d6 !important;
   }
-  .tabe-italic {
+  cr-tabe .tabe-italic {
     color: #6fcf73 !important;
   }
-  .tabe-number {
+  cr-tabe .tabe-number {
     color: #ffab5e !important;
   }
+}
+
+/* 面板里关掉某一层 → <html> 上出现 cr-off-*，把那一层还原成网页原本的样子。
+   选择器比上面多一层（html.class），所以 !important 对 !important 时这里赢。 */
+html.cr-off-nouns cr-tabe .tabe-bold {
+  font-weight: inherit !important;
+  letter-spacing: inherit;
+}
+html.cr-off-verbs cr-tabe .tabe-highlight {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: inherit !important;
+  padding: 0;
+}
+html.cr-off-adjs cr-tabe .tabe-italic {
+  color: inherit !important;
+  font-style: inherit !important;
+}
+html.cr-off-numbers cr-tabe .tabe-number {
+  color: inherit !important;
+  font-weight: inherit !important;
 }

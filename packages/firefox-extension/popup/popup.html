@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <img src="../icons/icon-48.png" alt="" width="22" height="22" />
+      <span class="brand">CantRead</span>
+    </header>
+
+    <section id="page" class="card" hidden>
+      <p id="status" class="status"></p>
+      <button id="toggle" type="button"></button>
+    </section>
+
+    <p id="restricted" class="note" hidden data-i18n="errRestricted"></p>
+    <p id="errDetail" class="detail" hidden></p>
+
+    <section class="layers">
+      <h2 data-i18n="layersTitle"></h2>
+      <label class="row">
+        <span class="sample s-noun" data-i18n="sampleNoun"></span>
+        <span class="label" data-i18n="layerNouns"></span>
+        <input type="checkbox" data-layer="nouns" role="switch" />
+      </label>
+      <label class="row">
+        <span class="sample s-verb" data-i18n="sampleVerb"></span>
+        <span class="label" data-i18n="layerVerbs"></span>
+        <input type="checkbox" data-layer="verbs" role="switch" />
+      </label>
+      <label class="row">
+        <span class="sample s-adj" data-i18n="sampleAdj"></span>
+        <span class="label" data-i18n="layerAdjs"></span>
+        <input type="checkbox" data-layer="adjs" role="switch" />
+      </label>
+      <label class="row">
+        <span class="sample s-num">42</span>
+        <span class="label" data-i18n="layerNumbers"></span>
+        <input type="checkbox" data-layer="numbers" role="switch" />
+      </label>
+    </section>
+
+    <footer>
+      <p><span data-i18n="tipShortcut"></span> <kbd id="shortcut"></kbd></p>
+      <p data-i18n="tipSelection"></p>
+      <p class="privacy" data-i18n="privacy"></p>
+      <p class="version" id="version"></p>
+    </footer>
+  </main>
+  <script src="../dist/popup.js"></script>
+</body>
+</html>

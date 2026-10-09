@@ -1,13 +1,14 @@
 {
   "name": "@cantread/firefox-extension",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "CantRead Firefox 插件 —— 网页/邮件正文 TABE 高亮，复用 @cantread/core",
+  "description": "CantRead 浏览器插件（Firefox）—— 网页/邮件正文 TABE 高亮，复用 @cantread/core",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "node package.mjs"
   },
   "dependencies": {
     "@cantread/core": "0.0.0"

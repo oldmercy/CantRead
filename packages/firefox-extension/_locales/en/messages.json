@@ -1,0 +1,65 @@
+{
+  "extName": {
+    "message": "CantRead — Reading Highlighter"
+  },
+  "extDescription": {
+    "message": "Makes walls of text scannable: nouns bold, verbs highlighted, adjectives green italic, numbers orange. Runs entirely on your device."
+  },
+  "actionTitle": {
+    "message": "CantRead: highlight this page"
+  },
+  "menuHighlightSelection": {
+    "message": "CantRead: highlight selected text"
+  },
+  "commandToggle": {
+    "message": "Turn highlighting on/off for this page"
+  },
+  "popupOn": {
+    "message": "Highlighted"
+  },
+  "popupOff": {
+    "message": "Not highlighted"
+  },
+  "btnRestore": {
+    "message": "Show original"
+  },
+  "btnHighlight": {
+    "message": "Highlight page"
+  },
+  "errRestricted": {
+    "message": "Firefox doesn't let extensions change this page (e.g. settings pages, the add-ons store, PDF viewer)."
+  },
+  "layersTitle": {
+    "message": "Highlight layers"
+  },
+  "layerNouns": {
+    "message": "Nouns · bold"
+  },
+  "layerVerbs": {
+    "message": "Verbs · highlight"
+  },
+  "layerAdjs": {
+    "message": "Adjectives · italic"
+  },
+  "layerNumbers": {
+    "message": "Numbers · orange"
+  },
+  "sampleNoun": {
+    "message": "Noun"
+  },
+  "sampleVerb": {
+    "message": "verb"
+  },
+  "sampleAdj": {
+    "message": "quick"
+  },
+  "tipShortcut": {
+    "message": "Shortcut:"
+  },
+  "tipSelection": {
+    "message": "Select text → right-click to highlight just that part."
+  },
+  "privacy": {
+    "message": "Runs on your device. No data is collected or sent."
+  }
+}

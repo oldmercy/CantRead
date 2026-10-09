@@ -1,35 +1,66 @@
 {
   "manifest_version": 3,
-  "name": "CantRead — TABE 阅读高亮",
-  "version": "0.1.0",
-  "description": "把网页/邮件正文做 TABE 高亮：名词加粗·动词黄高亮·形容词绿斜体·数字橙色。点图标开关，或只高亮选中的一段。本地运行，不发送数据。",
+  "name": "__MSG_extName__",
+  "version": "1.0.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
+  "homepage_url": "https://github.com/oldmercy/CantRead",
   "icons": {
     "48": "icons/icon-48.png",
-    "96": "icons/icon-96.png"
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
   },
-  "permissions": ["activeTab", "scripting", "contextMenus", "storage"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "storage"
+  ],
   "background": {
-    "scripts": ["dist/background.js"]
+    "scripts": [
+      "dist/background.js"
+    ]
   },
   "action": {
-    "default_title": "CantRead：开关 TABE 高亮",
+    "default_title": "__MSG_actionTitle__",
+    "default_popup": "popup/popup.html",
     "default_icon": {
-      "48": "icons/icon-48.png",
-      "96": "icons/icon-96.png"
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
     }
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["dist/content.js"],
-      "css": ["tabe.css"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "dist/content.js"
+      ],
+      "css": [
+        "tabe.css"
+      ],
       "run_at": "document_idle"
     }
   ],
+  "commands": {
+    "toggle-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+H"
+      },
+      "description": "__MSG_commandToggle__"
+    }
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "cantread@oldmercy.github.io",
-      "strict_min_version": "115.0"
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   }
 }

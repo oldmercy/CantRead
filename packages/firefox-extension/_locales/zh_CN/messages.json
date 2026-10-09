@@ -1,0 +1,65 @@
+{
+  "extName": {
+    "message": "CantRead — 阅读高亮"
+  },
+  "extDescription": {
+    "message": "把密密麻麻的文字变得能扫读：名词加粗、动词黄色高亮、形容词绿色斜体、数字橙色。全部在本机运行。"
+  },
+  "actionTitle": {
+    "message": "CantRead：高亮这个页面"
+  },
+  "menuHighlightSelection": {
+    "message": "CantRead：高亮选中文字"
+  },
+  "commandToggle": {
+    "message": "开/关当前页面的高亮"
+  },
+  "popupOn": {
+    "message": "已高亮本页"
+  },
+  "popupOff": {
+    "message": "高亮已关闭"
+  },
+  "btnRestore": {
+    "message": "还原原文"
+  },
+  "btnHighlight": {
+    "message": "高亮本页"
+  },
+  "errRestricted": {
+    "message": "Firefox 不允许插件修改这个页面（比如设置页、插件商店、PDF 阅读器）。"
+  },
+  "layersTitle": {
+    "message": "显示哪些高亮"
+  },
+  "layerNouns": {
+    "message": "名词 · 加粗"
+  },
+  "layerVerbs": {
+    "message": "动词 · 黄色高亮"
+  },
+  "layerAdjs": {
+    "message": "形容词 · 绿色斜体"
+  },
+  "layerNumbers": {
+    "message": "数字 · 橙色"
+  },
+  "sampleNoun": {
+    "message": "名词"
+  },
+  "sampleVerb": {
+    "message": "动词"
+  },
+  "sampleAdj": {
+    "message": "形容"
+  },
+  "tipShortcut": {
+    "message": "快捷键："
+  },
+  "tipSelection": {
+    "message": "选中一段文字 → 右键，可以只高亮那一段。"
+  },
+  "privacy": {
+    "message": "全部在本机运行，不收集、不上传任何数据。"
+  }
+}
