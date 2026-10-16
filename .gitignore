@@ -26,6 +26,7 @@ A-Dashboard/
 # Personal Claude Code config & session handoff (not for public repo)
 .claude/
 HANDOFF.md
+CLAUDE.md
 
 # Claude CLI 对话记录副本（私人，不入库）
 _cli_history/
