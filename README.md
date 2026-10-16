@@ -20,7 +20,7 @@
 | *Adjectives / adverbs* | *green italic* | Details — the supplements |
 | Numbers | orange | Quantities and dates |
 
-The **format** <mark>is</mark> *called* **TABE**. **It** <mark>grew out</mark> of the **notes** the **author**, **Ahui** (**dyslexia + ADHD**), <mark>wrote</mark> while **job hunting**, and **it** <mark>turned out</mark> to <mark>help</mark> **anyone** who <mark>finds</mark> *dense* **text** *hard* to <mark>start</mark>.
+The **format** <mark>is</mark> *called* **TABE**. **It** <mark>grew out</mark> of the **notes** the **author** (**ADHD**) <mark>wrote</mark> while **job hunting**, and **it** <mark>turned out</mark> to <mark>help</mark> **anyone** who <mark>finds</mark> *dense* **text** *hard* to <mark>start</mark>.
 
 ---
 

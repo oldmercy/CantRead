@@ -17,7 +17,7 @@ CantRead turns grammar into visual signals. It works like syntax highlighting, b
 | *Adjectives / adverbs* | *green italic* | Details — the supplements |
 | Numbers | orange | Quantities and dates |
 
-The format is called **TABE**. It grew out of the notes the author, Ahui (dyslexia + ADHD), wrote while job hunting, and it turned out to help anyone who finds dense text hard to start.
+The format is called **TABE**. It grew out of the notes the author (ADHD) wrote while job hunting, and it turned out to help anyone who finds dense text hard to start.
 
 ---
 
