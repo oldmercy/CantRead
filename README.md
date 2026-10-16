@@ -7,7 +7,7 @@
 
 **For brains that bounce off walls of text.**
 
-> 💡 This README is formatted by CantRead's own engine — you are reading TABE right now. Prefer plain text? Read the [unformatted version](scripts/readme-src/README.md).
+> 💡 This README is formatted by CantRead's own engine — you are reading TABE right now. **GitHub's rules do not allow text colors**, so this page can only show **bold nouns**, <mark>highlighted verbs</mark> and *italic adjectives*; the green and orange layers are missing. See the full colors in the screenshot below or on the [live demo page](https://oldmercy.github.io/CantRead/). Prefer plain text? Read the [unformatted version](scripts/readme-src/README.md).
 
 **CantRead** <mark>turns</mark> **grammar** into *visual* **signals**. **It** <mark>works</mark> *like* **syntax** <mark>highlighting</mark>, but for *natural* **language**: **your eyes** <mark>get</mark> **places** to <mark>land</mark>, so **you** <mark>can scan</mark> the **shape** of a **sentence** first and <mark>decide</mark> whether to <mark>read</mark> *closely*.
 
@@ -19,8 +19,6 @@
 | <mark>Verbs</mark> | <mark>yellow highlight</mark> | Actions — what happened |
 | *Adjectives / adverbs* | *green italic* | Details — the supplements |
 | Numbers | orange | Quantities and dates |
-
-> On GitHub, text colors are not allowed, so adjectives show as plain italic and numbers stay unformatted here. In the browser extension you get the full colors.
 
 The **format** <mark>is</mark> *called* **TABE**. **It** <mark>grew out</mark> of the **notes** the **author**, **Ahui** (**dyslexia + ADHD**), <mark>wrote</mark> while **job hunting**, and **it** <mark>turned out</mark> to <mark>help</mark> **anyone** who <mark>finds</mark> *dense* **text** *hard* to <mark>start</mark>.
 

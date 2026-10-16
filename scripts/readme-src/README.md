@@ -4,7 +4,7 @@
 
 **For brains that bounce off walls of text.**
 
-> 💡 This README is formatted by CantRead's own engine — you are reading TABE right now. Prefer plain text? Read the [unformatted version](scripts/readme-src/README.md). <!-- tabe:off -->
+> 💡 This README is formatted by CantRead's own engine — you are reading TABE right now. **GitHub's rules do not allow text colors**, so this page can only show **bold nouns**, <mark>highlighted verbs</mark> and *italic adjectives*; the green and orange layers are missing. See the full colors in the screenshot below or on the [live demo page](https://oldmercy.github.io/CantRead/). Prefer plain text? Read the [unformatted version](scripts/readme-src/README.md). <!-- tabe:off -->
 
 CantRead turns grammar into visual signals. It works like syntax highlighting, but for natural language: your eyes get places to land, so you can scan the shape of a sentence first and decide whether to read closely.
 
@@ -16,8 +16,6 @@ CantRead turns grammar into visual signals. It works like syntax highlighting, b
 | <mark>Verbs</mark> | <mark>yellow highlight</mark> | Actions — what happened |
 | *Adjectives / adverbs* | *green italic* | Details — the supplements |
 | Numbers | orange | Quantities and dates |
-
-> On GitHub, text colors are not allowed, so adjectives show as plain italic and numbers stay unformatted here. In the browser extension you get the full colors. <!-- tabe:off -->
 
 The format is called **TABE**. It grew out of the notes the author, Ahui (dyslexia + ADHD), wrote while job hunting, and it turned out to help anyone who finds dense text hard to start.
 
